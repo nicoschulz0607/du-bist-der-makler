@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@theme {
+  /* Font */
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand Colors */
+  --color-accent: #1B6B45;
+  --color-accent-hover: #145538;
+  --color-accent-light: #E8F5EE;
+  --color-accent-mid: #2D8A5A;
+
+  /* Text */
+  --color-text-primary: #222222;
+  --color-text-secondary: #717171;
+  --color-text-tertiary: #b0b0b0;
+
+  /* Surfaces & Borders */
+  --color-border: #DDDDDD;
+  --color-border-strong: #B0B0B0;
+  --color-surface: #F7F7F7;
+  --color-surface-mid: #EEEEEE;
+
+  /* Semantic */
+  --color-warning: #C07000;
+  --color-error: #C13515;
+
+  /* Border Radius */
+  --radius-pill: 9999px;
+  --radius-card: 16px;
+
+  /* Shadows */
+  --shadow-card: rgba(0,0,0,0.02) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 6px, rgba(0,0,0,0.10) 0px 4px 8px;
+  --shadow-hover: rgba(0,0,0,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.08) 0px 4px 12px, rgba(0,0,0,0.16) 0px 8px 20px;
+  --shadow-subtle: rgba(0,0,0,0.08) 0px 1px 4px;
+}
+
+/* Base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #ffffff;
+  color: #222222;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Container utility */
+.container-landing {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+@media (max-width: 768px) {
+  .container-landing {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* Section spacing */
+.section-padding {
+  padding-top: 96px;
+  padding-bottom: 96px;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+}
+
+/* Headline tracking (Airbnb-style negative tracking) */
+.headline-display {
+  letter-spacing: -0.44px;
+}
+
+.headline-section {
+  letter-spacing: -0.28px;
+}
+
+.headline-sub {
+  letter-spacing: -0.18px;
+}
