@@ -12,15 +12,15 @@ export default function Datenschutz() {
       maxWidth: "720px",
       margin: "0 auto",
       padding: "clamp(8rem, 14vw, 12rem) clamp(2rem, 6vw, 4rem) 6rem",
-      color: "#fbfbf4",
+      color: "#222222",
     }}>
-      <p style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(251,251,244,0.3)", marginBottom: "1rem", fontFamily: "monospace" }}>
+      <p style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(34,34,34,0.4)", marginBottom: "1rem", fontFamily: "monospace" }}>
         Rechtliches
       </p>
       <h1 style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", fontWeight: 700, letterSpacing: "-0.03em", marginBottom: "0.75rem" }}>
         Datenschutz&shy;erklärung
       </h1>
-      <p style={{ color: "rgba(251,251,244,0.3)", fontSize: "0.8rem", marginBottom: "3rem" }}>
+      <p style={{ color: "rgba(34,34,34,0.3)", fontSize: "0.8rem", marginBottom: "3rem" }}>
         Stand: April 2026
       </p>
 
@@ -34,7 +34,7 @@ export default function Datenschutz() {
       </Section>
 
       <Section title="2. Grundsätze der Datenverarbeitung">
-        <p>
+        <p style={{ color: "rgba(34,34,34,0.7)", lineHeight: 1.8 }}>
           Wir erheben und verarbeiten personenbezogene Daten nur, soweit dies für die Bereitstellung unserer Website und unserer Leistungen erforderlich ist. Die Verarbeitung erfolgt auf Grundlage der einschlägigen Rechtsvorschriften, insbesondere der Datenschutz-Grundverordnung (DSGVO) und des Bundesdatenschutzgesetzes (BDSG).
         </p>
       </Section>
@@ -104,8 +104,8 @@ export default function Datenschutz() {
         </p>
       </Section>
 
-      <div style={{ marginTop: "4rem", paddingTop: "2rem", borderTop: "1px solid rgba(251,251,244,0.08)" }}>
-        <Link href="/" style={{ color: "rgba(251,251,244,0.4)", fontSize: "0.875rem", textDecoration: "none" }}>
+      <div style={{ marginTop: "4rem", paddingTop: "2rem", borderTop: "1px solid rgba(34,34,34,0.08)" }}>
+        <Link href="/" style={{ color: "rgba(34,34,34,0.4)", fontSize: "0.875rem", textDecoration: "none" }}>
           ← Zurück zur Startseite
         </Link>
       </div>
@@ -126,12 +126,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         fontWeight: 600,
         letterSpacing: "0.12em",
         textTransform: "uppercase",
-        color: "rgba(251,251,244,0.35)",
+        color: "rgba(34,34,34,0.4)",
         marginBottom: "0.75rem",
       }}>
         {title}
       </h2>
-      <div style={{ fontSize: "0.95rem", lineHeight: 1.8, color: "rgba(251,251,244,0.75)" }}>
+      <div style={{ fontSize: "0.95rem", lineHeight: 1.8, color: "rgba(34,34,34,0.8)" }}>
         {children}
       </div>
     </div>
