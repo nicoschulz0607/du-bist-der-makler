@@ -1,4 +1,9 @@
-export default function Navbar() {
+import { createClient } from '@/lib/supabase/server'
+
+export default async function Navbar() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[#EEEEEE]">
       <div className="container-landing">
@@ -37,12 +42,31 @@ export default function Navbar() {
           </nav>
 
           {/* CTA */}
-          <a
-            href="#registrieren"
-            className="inline-flex items-center justify-center rounded-pill bg-accent hover:bg-accent-hover text-white text-[14px] font-semibold px-5 py-2.5 transition-colors duration-150 min-h-[44px]"
-          >
-            Jetzt starten
-          </a>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <a
+                href="/dashboard"
+                className="inline-flex items-center justify-center rounded-pill bg-accent hover:bg-accent-hover text-white text-[14px] font-semibold px-5 py-2.5 transition-colors duration-150 min-h-[44px]"
+              >
+                Zum Dashboard →
+              </a>
+            ) : (
+              <>
+                <a
+                  href="/login"
+                  className="text-[14px] font-semibold text-text-primary hover:text-accent transition-colors duration-150"
+                >
+                  Einloggen
+                </a>
+                <a
+                  href="#registrieren"
+                  className="inline-flex items-center justify-center rounded-pill bg-accent hover:bg-accent-hover text-white text-[14px] font-semibold px-5 py-2.5 transition-colors duration-150 min-h-[44px]"
+                >
+                  Jetzt starten
+                </a>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>
