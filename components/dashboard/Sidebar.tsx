@@ -86,7 +86,7 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
   const tierLabel = getTierLabel(tier)
 
   return (
-    <aside className="hidden md:flex w-60 bg-surface border-r border-[#EEEEEE] flex-col flex-shrink-0 min-h-screen">
+    <aside className="hidden md:flex w-60 bg-surface border-r border-[#EEEEEE] flex-col flex-shrink-0 h-screen overflow-y-auto">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-[#EEEEEE]">
         <Link href="/" className="flex items-center gap-2">

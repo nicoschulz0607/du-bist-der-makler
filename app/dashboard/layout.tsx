@@ -25,11 +25,11 @@ export default async function DashboardLayout({
   const vorname = profile?.vorname ?? ''
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div className="flex h-screen overflow-hidden bg-surface">
       <Sidebar tier={tier} vorname={vorname} />
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Topbar vorname={vorname || 'du'} tier={tier} />
-        <main className="flex-1 px-8 py-7">
+        <main className="flex-1 px-8 py-7 overflow-y-auto">
           {children}
         </main>
       </div>

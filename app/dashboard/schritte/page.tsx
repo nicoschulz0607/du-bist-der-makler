@@ -33,15 +33,37 @@ export default async function SchrittePage() {
 
   if (!user) redirect('/login')
 
-  const [profileRes, statusRes] = await Promise.all([
+  const [profileRes, statusRes, listingRes] = await Promise.all([
     supabase.from('profiles').select('paket_tier').eq('id', user.id).single(),
     supabase.from('checkliste_status').select('aufgabe_id, completed').eq('user_id', user.id),
+    supabase.from('listings').select('adresse_strasse, wohnflaeche_qm, zimmer, preis, status').eq('user_id', user.id).limit(1).maybeSingle(),
   ])
 
   const tier = (profileRes.data?.paket_tier ?? null) as Tier
-  const completedIds = new Set(
-    (statusRes.data ?? []).filter((i) => i.completed).map((i) => i.aufgabe_id)
-  )
+  const listing = listingRes.data
+
+  // Systemseitig prüfbare Items automatisch abhaken
+  const autoChecked: string[] = []
+  if (profileRes.data?.paket_tier) autoChecked.push('konto_erstellt')
+  if (listing?.adresse_strasse && listing?.wohnflaeche_qm && listing?.zimmer) autoChecked.push('objekt_erfasst')
+  if (listing?.preis) autoChecked.push('preis_ermittelt')
+  if (listing?.status === 'aktiv') autoChecked.push('inserat_live')
+
+  // Auto-gechecktes in DB schreiben (nur wenn noch nicht als completed vorhanden)
+  if (autoChecked.length > 0) {
+    await supabase.from('checkliste_status').upsert(
+      autoChecked.map((id) => ({
+        user_id: user.id,
+        aufgabe_id: id,
+        completed: true,
+        completed_at: new Date().toISOString(),
+      })),
+      { onConflict: 'user_id,aufgabe_id', ignoreDuplicates: true }
+    )
+  }
+
+  const manualCompleted = (statusRes.data ?? []).filter((i) => i.completed).map((i) => i.aufgabe_id)
+  const completedIds = new Set([...manualCompleted, ...autoChecked])
 
   const totalItems = CHECKLIST.flatMap((p) => p.items).length
   const completedCount = completedIds.size

@@ -2,9 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronRight, Lock, ExternalLink } from 'lucide-react'
+import { ChevronDown, ChevronRight, Lock, ExternalLink, Zap } from 'lucide-react'
 import { canAccess, type Tier } from '@/lib/tier'
 import { type ChecklistPhase } from '@/lib/checklist'
+
+// Items die systemseitig automatisch abgehakt werden
+const AUTO_CHECK_IDS = new Set(['konto_erstellt', 'objekt_erfasst', 'preis_ermittelt', 'inserat_live'])
 
 interface ChecklistClientProps {
   checklist: ChecklistPhase[]
@@ -38,6 +41,9 @@ export default function ChecklistClient({ checklist, completedIds, tier, toggleI
       await toggleItem(aufgabeId, checked)
     })
   }
+
+  const totalCompleted = checklist.flatMap((p) => p.items).filter((i) => completed.has(i.id)).length
+  const totalItems = checklist.flatMap((p) => p.items).length
 
   return (
     <div className="space-y-3">
@@ -77,30 +83,42 @@ export default function ChecklistClient({ checklist, completedIds, tier, toggleI
                 {phase.items.map((item) => {
                   const isCompleted = completed.has(item.id)
                   const isLocked = item.requiredTier ? !canAccess(tier, item.requiredTier) : false
+                  const isAuto = AUTO_CHECK_IDS.has(item.id) && isCompleted
 
                   return (
                     <li key={item.id} className="flex items-start gap-3 px-5 py-4">
-                      <input
-                        type="checkbox"
-                        id={item.id}
-                        checked={isCompleted}
-                        onChange={(e) => handleCheck(item.id, e.target.checked)}
-                        className="w-4 h-4 mt-0.5 rounded border-[#DDDDDD] accent-[#1B6B45] flex-shrink-0 cursor-pointer"
-                      />
+                      {isAuto ? (
+                        <div className="w-4 h-4 mt-0.5 flex-shrink-0 flex items-center justify-center rounded-full bg-accent">
+                          <Zap size={9} className="text-white" fill="white" />
+                        </div>
+                      ) : (
+                        <input
+                          type="checkbox"
+                          id={item.id}
+                          checked={isCompleted}
+                          onChange={(e) => handleCheck(item.id, e.target.checked)}
+                          className="w-4 h-4 mt-0.5 rounded border-[#DDDDDD] accent-[#1B6B45] flex-shrink-0 cursor-pointer"
+                        />
+                      )}
                       <div className="flex-1 min-w-0">
                         <label
-                          htmlFor={item.id}
-                          className={`flex items-center gap-2 text-[14px] font-semibold cursor-pointer ${
-                            isCompleted ? 'line-through text-text-tertiary' : 'text-text-primary'
-                          }`}
+                          htmlFor={isAuto ? undefined : item.id}
+                          className={`flex items-center gap-2 text-[14px] font-semibold ${
+                            isAuto ? 'cursor-default' : 'cursor-pointer'
+                          } ${isCompleted ? 'line-through text-text-tertiary' : 'text-text-primary'}`}
                         >
                           {item.title}
                           {isLocked && <Lock size={12} className="text-text-tertiary flex-shrink-0" />}
+                          {isAuto && (
+                            <span className="text-[10px] font-semibold text-accent bg-[#E8F5EE] px-1.5 py-0.5 rounded-full no-underline" style={{ textDecoration: 'none' }}>
+                              automatisch
+                            </span>
+                          )}
                         </label>
                         <p className="text-[12px] text-text-secondary mt-0.5 leading-relaxed">
                           {item.description}
                         </p>
-                        {item.actionLabel && item.actionHref && (
+                        {item.actionLabel && item.actionHref && !isCompleted && (
                           <Link
                             href={item.actionHref}
                             className="inline-flex items-center gap-1 mt-2 text-[12px] font-semibold text-accent hover:underline"
