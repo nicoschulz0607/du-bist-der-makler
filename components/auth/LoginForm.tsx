@@ -68,11 +68,7 @@ export default function LoginForm() {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (user?.user_metadata?.paket_tier) {
-      router.push('/dashboard')
-    } else {
-      router.push('/onboarding')
-    }
+    router.push('/dashboard')
   }
 
   return (

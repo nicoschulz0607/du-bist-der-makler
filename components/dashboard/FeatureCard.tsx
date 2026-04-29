@@ -29,7 +29,7 @@ export default function FeatureCard({
   return (
     <div className="relative">
       <Link
-        href={accessible ? href : `/onboarding?upgrade=${upgradeTarget}`}
+        href={accessible ? href : '/#preise'}
         className={`block bg-white border border-[#DDDDDD] rounded-xl p-6 transition-all duration-150 ${
           accessible
             ? 'hover:border-accent hover:shadow-sm hover:-translate-y-px'

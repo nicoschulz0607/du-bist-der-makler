@@ -280,7 +280,7 @@ export default async function DashboardPage() {
             <p className="text-[13px] text-white/75">{upgradeInfo.sub}</p>
           </div>
           <Link
-            href={`/onboarding?upgrade=${upgradeTarget}`}
+            href="/#preise"
             className="flex-shrink-0 inline-flex items-center justify-center rounded-pill bg-white text-accent text-[14px] font-semibold px-5 h-10 hover:bg-[#F7F7F7] transition-colors duration-150 active:scale-[0.98] whitespace-nowrap"
           >
             {upgradeInfo.cta}

@@ -54,7 +54,7 @@ export default function LockedPage({
         </ul>
 
         <Link
-          href={`/onboarding?upgrade=${requiredTier}`}
+          href="/#preise"
           className="w-full inline-flex items-center justify-center rounded-pill bg-accent hover:bg-accent-hover text-white text-[15px] font-semibold px-6 min-h-[52px] transition-colors duration-150 active:scale-[0.98]"
         >
           Upgrade auf {tierLabel} ({upgradePrice}) →
