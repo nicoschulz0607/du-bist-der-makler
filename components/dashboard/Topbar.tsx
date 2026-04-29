@@ -18,7 +18,7 @@ interface TopbarProps {
 
 export default function Topbar({ vorname, tier }: TopbarProps) {
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-[#EEEEEE] h-16 flex items-center justify-between px-7 flex-shrink-0">
+    <header className="sticky top-0 z-50 bg-white border-b border-[#EEEEEE] h-16 flex items-center justify-between px-8 flex-shrink-0">
       <div>
         <p className="text-[15px] font-semibold text-text-primary leading-tight">
           {getGreeting(vorname ?? 'du')}

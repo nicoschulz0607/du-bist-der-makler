@@ -29,7 +29,7 @@ export default async function DashboardLayout({
       <Sidebar tier={tier} vorname={vorname} />
       <div className="flex flex-col flex-1 min-w-0">
         <Topbar vorname={vorname || 'du'} tier={tier} />
-        <main className="flex-1 p-7 max-w-5xl w-full">
+        <main className="flex-1 px-8 py-7">
           {children}
         </main>
       </div>
