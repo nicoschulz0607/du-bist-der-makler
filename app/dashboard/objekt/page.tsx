@@ -27,6 +27,9 @@ async function speicherObjekt(formData: FormData) {
     preis: formData.get('preis') ? Number(formData.get('preis')) : null,
     energieausweis_klasse: (formData.get('energieausweis_klasse') as string) || null,
     beschreibung: (formData.get('beschreibung') as string) || null,
+    fotos: (() => {
+      try { return JSON.parse(formData.get('fotos') as string) } catch { return [] }
+    })(),
   }
 
   if (listingId) {
@@ -49,7 +52,7 @@ export default async function ObjektPage() {
 
   const { data: listing } = await supabase
     .from('listings')
-    .select('id, objekttyp, adresse_strasse, adresse_plz, adresse_ort, wohnflaeche_qm, zimmer, baujahr, zustand, preis, energieausweis_klasse, beschreibung, status')
+    .select('id, objekttyp, adresse_strasse, adresse_plz, adresse_ort, wohnflaeche_qm, zimmer, baujahr, zustand, preis, energieausweis_klasse, beschreibung, status, fotos')
     .eq('user_id', user.id)
     .limit(1)
     .maybeSingle()
@@ -61,10 +64,10 @@ export default async function ObjektPage() {
           Mein Objekt
         </h1>
         <p className="text-[14px] text-text-secondary">
-          Trage deine Immobiliendaten ein — diese werden als Basis für den KI-Exposé-Generator und die Checkliste verwendet.
+          Trage deine Immobiliendaten ein — Basis für Inserat-Texte, KI-Exposé PDF und die Checkliste.
         </p>
       </div>
-      <ObjektForm listing={listing ?? null} save={speicherObjekt} />
+      <ObjektForm listing={listing ?? null} userId={user.id} save={speicherObjekt} />
     </div>
   )
 }

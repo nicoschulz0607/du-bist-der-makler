@@ -61,7 +61,8 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
     {
       title: 'KI-Tools',
       items: [
-        { label: 'KI-Exposé', href: '/dashboard/expose', icon: <FileText size={16} strokeWidth={1.75} />, requiredTier: 'pro', badge: 'Pro' },
+        { label: 'Inserat-Texte', href: '/dashboard/expose', icon: <FileText size={16} strokeWidth={1.75} />, requiredTier: 'pro', badge: 'Pro' },
+        { label: 'KI-Exposé PDF', href: '/dashboard/expose-pdf', icon: <FileText size={16} strokeWidth={1.75} />, requiredTier: 'pro', badge: 'Pro' },
         { label: 'Preisrechner', href: '/dashboard/preisrechner', icon: <TrendingUp size={16} strokeWidth={1.75} />, requiredTier: 'pro', badge: 'Pro' },
         { label: 'KI-Chatbot', href: '/dashboard/chatbot', icon: <MessageSquare size={16} strokeWidth={1.75} /> },
       ],

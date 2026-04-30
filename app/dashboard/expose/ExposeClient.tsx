@@ -204,7 +204,7 @@ export default function ExposeClient({ listing }: ExposeClientProps) {
           {loading ? (
             <>
               <RefreshCw size={15} className="animate-spin" />
-              KI erstellt dein Exposé...
+              KI generiert deine Texte...
             </>
           ) : expose ? (
             <>
@@ -214,7 +214,7 @@ export default function ExposeClient({ listing }: ExposeClientProps) {
           ) : (
             <>
               <Sparkles size={15} />
-              Exposé generieren
+              Texte generieren
             </>
           )}
         </button>

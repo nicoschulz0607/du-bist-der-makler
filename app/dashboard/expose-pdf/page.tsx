@@ -2,11 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { canAccess, type Tier } from '@/lib/tier'
 import LockedPage from '@/components/dashboard/LockedPage'
-import ExposeClient from './ExposeClient'
+import PdfClient from './PdfClient'
 
-export const metadata = { title: 'Inserat-Text Generator — Dashboard' }
+export const metadata = { title: 'KI-Exposé PDF — Dashboard' }
 
-export default async function ExposePage() {
+export default async function ExposePdfPage() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -24,13 +24,13 @@ export default async function ExposePage() {
   if (!canAccess(tier, 'pro')) {
     return (
       <LockedPage
-        featureName="Inserat-Text Generator"
+        featureName="KI-Exposé PDF"
         requiredTier="pro"
-        description="Fertige Inserat-Texte für ImmoScout & Co. — Titel, Kurzbeschreibung, Volltext und Highlights in 20 Sekunden per KI."
+        description="Erstelle ein professionelles Exposé-PDF mit Fotos, Eckdaten und KI-generierten Texten — fertig zum Versenden."
         benefits={[
-          'Professionelle Texte für alle Portale in Sekunden',
-          'Direkt aus deinen Objektdaten — kein erneutes Eintippen',
-          'Alle Sektionen einzeln kopierbar',
+          'Gestaltetes PDF mit Titelbild, Eckdaten und Texten',
+          'Automatisch aus deinen Objektdaten und Inserat-Texten',
+          'Direkt als Download — sofort versendbar',
         ]}
         upgradePrice="599 €"
       />
@@ -39,23 +39,30 @@ export default async function ExposePage() {
 
   const { data: listing } = await supabase
     .from('listings')
-    .select('objekttyp, adresse_strasse, adresse_plz, adresse_ort, wohnflaeche_qm, zimmer, preis, expose_html, expose_generiert_at')
+    .select('objekttyp, adresse_strasse, adresse_plz, adresse_ort, wohnflaeche_qm, zimmer, preis, fotos, expose_html, expose_generiert_at')
     .eq('user_id', user.id)
     .limit(1)
     .maybeSingle()
+
+  const normalizedListing = listing
+    ? {
+        ...listing,
+        fotos: Array.isArray(listing.fotos) ? listing.fotos : [],
+      }
+    : null
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-[22px] font-bold text-text-primary mb-1" style={{ letterSpacing: '-0.18px' }}>
-          Inserat-Text Generator
+          KI-Exposé PDF
         </h1>
         <p className="text-[14px] text-text-secondary">
-          KI-generierte Texte für ImmoScout, Kleinanzeigen & Co. — kopierfertig in 20 Sekunden.
+          Gestaltetes PDF mit Titelbild, Eckdaten und KI-Texten — fertig zum Versenden an Interessenten.
         </p>
       </div>
 
-      <ExposeClient listing={listing ?? null} />
+      <PdfClient listing={normalizedListing} />
     </div>
   )
 }

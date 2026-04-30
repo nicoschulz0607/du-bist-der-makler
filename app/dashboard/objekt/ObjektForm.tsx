@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { CheckCircle2, AlertCircle } from 'lucide-react'
+import FotoUpload from '@/components/dashboard/FotoUpload'
 
 const inputBase =
   'w-full rounded-[8px] border border-[#DDDDDD] px-4 min-h-[52px] text-[15px] font-medium text-text-primary bg-white outline-none transition-all duration-200 placeholder:text-text-tertiary focus:ring-2 focus:ring-accent focus:border-transparent'
@@ -22,25 +24,31 @@ interface ListingRow {
   energieausweis_klasse: string | null
   beschreibung: string | null
   status: string | null
+  fotos: string[] | null
 }
 
 interface ObjektFormProps {
   listing: ListingRow | null
+  userId: string
   save: (formData: FormData) => Promise<void>
 }
 
-export default function ObjektForm({ listing, save }: ObjektFormProps) {
+export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
+  const [fotos, setFotos] = useState<string[]>(listing?.fotos ?? [])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
+    formData.set('fotos', JSON.stringify(fotos))
     setSaveStatus('idle')
     startTransition(async () => {
       try {
         await save(formData)
         setSaveStatus('saved')
+        router.refresh()
       } catch {
         setSaveStatus('error')
       }
@@ -193,13 +201,15 @@ export default function ObjektForm({ listing, save }: ObjektFormProps) {
           />
         </div>
 
-        {/* Foto-Upload Platzhalter */}
+        {/* Foto-Upload */}
         <div>
-          <label className={labelBase}>Fotos (min. 5, max. 30)</label>
-          <div className="border-2 border-dashed border-[#DDDDDD] rounded-[8px] p-8 flex flex-col items-center text-center">
-            <p className="text-[14px] font-medium text-text-secondary">Foto-Upload kommt in Kürze</p>
-            <p className="text-[12px] text-text-tertiary mt-1">JPEG / PNG, max. 10 MB pro Foto</p>
-          </div>
+          <label className={labelBase}>Fotos (max. 30) — erstes Foto wird Titelbild</label>
+          <FotoUpload
+            userId={userId}
+            listingId={listing?.id ?? null}
+            initialFotos={listing?.fotos ?? []}
+            onChange={setFotos}
+          />
         </div>
 
         {/* Feedback */}
