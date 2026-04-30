@@ -55,7 +55,7 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
 
       const { error } = await supabase.storage.from('listing-photos').upload(path, file)
       if (error) {
-        errors.push(`${file.name}: Upload fehlgeschlagen`)
+        errors.push(`${file.name}: ${error.message}`)
         continue
       }
 
