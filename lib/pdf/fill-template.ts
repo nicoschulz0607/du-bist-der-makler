@@ -98,11 +98,11 @@ function injectMapIframe(html: string, lat: string, lon: string): string {
   const lonF = parseFloat(lon)
   const bbox = `${(lonF - delta).toFixed(5)},${(latF - delta).toFixed(5)},${(lonF + delta).toFixed(5)},${(latF + delta).toFixed(5)}`
   const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`
-  // Wrap in overflow:hidden container; push iframe up 35px (crops zoom controls at top)
-  // and extend height by 70px total so attribution footer is hidden at bottom.
-  // pointer-events:none + scrolling=no removes all scrollbars and interaction.
+  // -70px top: hides both Leaflet zoom buttons (+/-)
+  // +140px height: 70px extra at top + 70px at bottom hides the attribution bar
+  // pointer-events:none + scrolling=no: no scrollbars, no interaction
   const wrapper = `<div style="position:relative;overflow:hidden;height:60mm;border:0.3mm solid #cccccc;border-radius:2mm;">` +
-    `<iframe src="${src}" scrolling="no" style="position:absolute;top:-35px;left:-1px;width:calc(100% + 2px);height:calc(100% + 70px);border:0;pointer-events:none;" loading="lazy" title="Standort"></iframe>` +
+    `<iframe src="${src}" scrolling="no" style="position:absolute;top:-70px;left:-1px;width:calc(100% + 2px);height:calc(100% + 140px);border:0;pointer-events:none;" loading="lazy" title="Standort"></iframe>` +
     `</div>`
   return html.replace(
     /<div class="map-placeholder">[\s\S]*?<\/div>/,
@@ -127,92 +127,35 @@ html, body { overflow-x: hidden; }
   return html.replace('</head>', style + '\n</head>')
 }
 
-interface InfraItem { name: string; dist: string }
-interface InfraData {
-  schule1?: InfraItem; schule2?: InfraItem
-  einkauf1?: InfraItem; einkauf2?: InfraItem
-  arzt1?: InfraItem; krankenhaus?: InfraItem
-  oepnv1?: InfraItem; autobahn?: InfraItem
-  freizeit1?: InfraItem; freizeit2?: InfraItem
-  stadtzentrum?: InfraItem
-}
-
-function haversineM(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLon = (lon2 - lon1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-function fmtDist(m: number): string {
-  return m < 1000 ? `${Math.round(m / 50) * 50} m` : `${(m / 1000).toFixed(1).replace('.', ',')} km`
-}
-
-async function fetchInfrastruktur(lat: number, lon: number): Promise<InfraData> {
-  const q = `[out:json][timeout:12];
-(
-  node["amenity"~"school|kindergarten"](around:5000,${lat},${lon});
-  node["shop"~"supermarket|convenience|bakery|grocery"](around:8000,${lat},${lon});
-  node["amenity"~"doctors|hospital|clinic"](around:6000,${lat},${lon});
-  node["railway"~"station|halt|tram_stop"](around:6000,${lat},${lon});
-  node["highway"="bus_stop"](around:1500,${lat},${lon});
-  node["leisure"~"park|sports_centre|swimming_pool"](around:4000,${lat},${lon});
-  node["tourism"~"attraction|viewpoint"](around:5000,${lat},${lon});
-  node["natural"="waterfall"](around:8000,${lat},${lon});
-  node["highway"="motorway_junction"](around:30000,${lat},${lon});
-  node["place"~"town|city"](around:40000,${lat},${lon});
-);
-out body 100;`
-
-  try {
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: q,
-      headers: { 'Content-Type': 'text/plain' },
-      signal: AbortSignal.timeout(12000),
-    })
-    const data = await res.json()
-    const els: Array<{ lat: number; lon: number; tags: Record<string, string> }> = data.elements ?? []
-
-    const pick = (
-      filter: (e: { tags: Record<string, string> }) => boolean,
-      count = 2
-    ): InfraItem[] =>
-      els
-        .filter(filter)
-        .map(e => ({
-          name: e.tags.name ?? e.tags.amenity ?? e.tags.shop ?? e.tags.leisure ?? e.tags.railway ?? '—',
-          distM: haversineM(lat, lon, e.lat, e.lon),
-        }))
-        .sort((a, b) => a.distM - b.distM)
-        .slice(0, count)
-        .map(e => ({ name: e.name, dist: fmtDist(e.distM) }))
-
-    const schools = pick(e => /school|kindergarten/.test(e.tags.amenity ?? ''))
-    const shops = pick(e => /supermarket|convenience|bakery|grocery/.test(e.tags.shop ?? ''))
-    const health = pick(e => /doctors|hospital|clinic/.test(e.tags.amenity ?? ''))
-    const transit = pick(e => /station|halt|tram_stop/.test(e.tags.railway ?? '') || e.tags.highway === 'bus_stop')
-    const leisure = pick(e =>
-      /park|sports_centre|swimming_pool/.test(e.tags.leisure ?? '') ||
-      /attraction|viewpoint/.test(e.tags.tourism ?? '') ||
-      e.tags.natural === 'waterfall'
-    )
-    const motorway = pick(e => e.tags.highway === 'motorway_junction', 1)
-    const cities = pick(e => /town|city/.test(e.tags.place ?? ''), 2)
-
-    return {
-      schule1: schools[0], schule2: schools[1],
-      einkauf1: shops[0], einkauf2: shops[1],
-      arzt1: health[0], krankenhaus: health[1],
-      oepnv1: transit[0],
-      freizeit1: leisure[0], freizeit2: leisure[1],
-      autobahn: motorway[0],
-      stadtzentrum: cities[0],
-    }
-  } catch {
-    return {}
-  }
+// Infrastructure data is loaded client-side (browser fetches Overpass after page load).
+// This avoids server-side timeouts on Vercel and works with any plan tier.
+function injectInfraScript(html: string, lat: string, lon: string): string {
+  const js = `(function(){
+var la=${lat},lo=${lon};
+function hav(a,b){var R=6371000,x=(a-la)*Math.PI/180,y=(b-lo)*Math.PI/180,z=Math.sin(x/2)*Math.sin(x/2)+Math.cos(la*Math.PI/180)*Math.cos(a*Math.PI/180)*Math.sin(y/2)*Math.sin(y/2);return R*2*Math.atan2(Math.sqrt(z),Math.sqrt(1-z))}
+function fmt(m){return m<1000?Math.round(m/50)*50+' m':(m/1000).toFixed(1).replace('.',',')+' km'}
+function pick(els,fn,n){return els.filter(fn).map(function(e){return{nm:e.tags.name||e.tags.amenity||e.tags.shop||e.tags.leisure||e.tags.railway||e.tags.tourism||'—',d:hav(e.lat,e.lon)}}).sort(function(a,b){return a.d-b.d}).slice(0,n||2).map(function(e){return[e.nm,fmt(e.d)]})}
+function set(items,i,j,nm,dist){var it=items[i];if(!it)return;var li=it.querySelectorAll('li')[j];if(!li)return;li.querySelector('span:first-child').textContent=nm;var ds=li.querySelector('span.dist');if(ds)ds.textContent=dist}
+var q='[out:json][timeout:15];(node["amenity"~"school|kindergarten"](around:5000,'+la+','+lo+');node["shop"~"supermarket|convenience|bakery"](around:8000,'+la+','+lo+');node["amenity"~"doctors|hospital|clinic"](around:6000,'+la+','+lo+');node["railway"~"station|halt|tram_stop"](around:6000,'+la+','+lo+');node["highway"="bus_stop"](around:1500,'+la+','+lo+');node["leisure"~"park|sports_centre|swimming_pool"](around:4000,'+la+','+lo+');node["tourism"~"attraction|viewpoint"](around:5000,'+la+','+lo+');node["natural"="waterfall"](around:8000,'+la+','+lo+');node["highway"="motorway_junction"](around:30000,'+la+','+lo+');node["place"~"town|city"](around:40000,'+la+','+lo+'););out body 100;';
+fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:q}).then(function(r){return r.json()}).then(function(data){
+var els=data.elements||[];
+var sc=pick(els,function(e){return/school|kindergarten/.test(e.tags.amenity||'')});
+var sh=pick(els,function(e){return/supermarket|convenience|bakery/.test(e.tags.shop||'')});
+var hl=pick(els,function(e){return/doctors|hospital|clinic/.test(e.tags.amenity||'')});
+var tr=pick(els,function(e){return/station|halt|tram_stop/.test(e.tags.railway||'')||e.tags.highway==='bus_stop'});
+var fr=pick(els,function(e){return/park|sports_centre|swimming_pool/.test(e.tags.leisure||'')||/attraction|viewpoint/.test(e.tags.tourism||'')||e.tags.natural==='waterfall'});
+var mv=pick(els,function(e){return e.tags.highway==='motorway_junction'},1);
+var ct=pick(els,function(e){return/town|city/.test(e.tags.place||'')},1);
+var items=document.querySelectorAll('.infra-item');
+if(sc[0])set(items,0,0,sc[0][0],sc[0][1]);if(sc[1])set(items,0,1,sc[1][0],sc[1][1]);
+if(sh[0])set(items,1,0,sh[0][0],sh[0][1]);if(sh[1])set(items,1,1,sh[1][0],sh[1][1]);
+if(hl[0])set(items,2,0,hl[0][0],hl[0][1]);if(hl[1])set(items,2,1,hl[1][0],hl[1][1]);
+if(tr[0])set(items,3,0,tr[0][0],tr[0][1]);if(mv[0])set(items,3,1,mv[0][0],mv[0][1]);
+if(fr[0])set(items,4,0,fr[0][0],fr[0][1]);if(fr[1])set(items,4,1,fr[1][0],fr[1][1]);
+if(ct[0])set(items,5,0,ct[0][0],ct[0][1]);
+}).catch(function(){});
+})();`
+  return html.replace('</body>', `<script>${js}</script>\n</body>`)
 }
 
 function injectPrintBar(html: string): string {
@@ -237,12 +180,11 @@ export async function fillTemplate(options: FillTemplateOptions): Promise<string
   html = setAktiveEnergieKlasse(html, listing.energieausweis_klasse ?? null)
   html = injectEnergieFix(html)
 
-  // OSM map + infrastructure
+  // OSM map + client-side infra script
   const coords = await geocodeAddress(listing.adresse_strasse, listing.adresse_plz, listing.adresse_ort)
-  let infra: InfraData = {}
   if (coords) {
     html = injectMapIframe(html, coords.lat, coords.lon)
-    infra = await fetchInfrastruktur(parseFloat(coords.lat), parseFloat(coords.lon))
+    html = injectInfraScript(html, coords.lat, coords.lon)
   }
 
   const fotos = listing.fotos

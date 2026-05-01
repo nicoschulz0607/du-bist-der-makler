@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { canAccess } from '@/lib/tier'
 import { fillTemplate } from '@/lib/pdf/fill-template'
 
-export const maxDuration = 30
+export const maxDuration = 15
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
