@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { type InfraData, geocodeAddress } from '@/lib/infra'
+import { normalizeFotos } from '@/lib/foto'
 
 interface FillTemplateOptions {
   listing: {
@@ -15,7 +16,7 @@ interface FillTemplateOptions {
     preis: number | null
     energieausweis_klasse: string | null
     grundriss_url?: string | null
-    fotos: string[]
+    fotos: unknown[]
     badezimmer?: number | null
     schlafzimmer?: number | null
     etage?: string | null
@@ -244,7 +245,7 @@ export async function fillTemplate(options: FillTemplateOptions): Promise<string
     html = injectInfraScript(html, mapLat, mapLon)
   }
 
-  const fotos = listing.fotos
+  const fotos = normalizeFotos(listing.fotos).map(f => f.url)
   const fotoSlots = Array.from({ length: 22 }, (_, i) => cyclePhoto(fotos, i))
   const absätze = splitBeschreibung(expose.beschreibung_lang)
 

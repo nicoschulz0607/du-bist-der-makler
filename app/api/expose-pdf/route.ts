@@ -46,10 +46,8 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  const fotos: string[] = Array.isArray(listing.fotos) ? listing.fotos : []
-
   const html = await fillTemplate({
-    listing: { ...listing, fotos },
+    listing: { ...listing, fotos: Array.isArray(listing.fotos) ? listing.fotos : [] },
     expose,
     userName: user.user_metadata?.full_name ?? user.email?.split('@')[0],
     userEmail: user.email,

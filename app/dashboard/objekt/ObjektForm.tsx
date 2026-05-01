@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, AlertCircle } from 'lucide-react'
 import FotoUpload from '@/components/dashboard/FotoUpload'
+import { type FotoItem, normalizeFotos } from '@/lib/foto'
 
 const inputBase =
   'w-full rounded-[8px] border border-[#DDDDDD] px-4 min-h-[52px] text-[15px] font-medium text-text-primary bg-white outline-none transition-all duration-200 placeholder:text-text-tertiary focus:ring-2 focus:ring-accent focus:border-transparent'
@@ -63,7 +64,7 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
-  const [fotos, setFotos] = useState<string[]>(listing?.fotos ?? [])
+  const [fotos, setFotos] = useState<FotoItem[]>(() => normalizeFotos(listing?.fotos ?? []))
   const [ausstattungItems, setAusstattungItems] = useState<string[]>(listing?.ausstattung_items ?? [])
 
   function toggleAusstattung(item: string) {
@@ -309,7 +310,7 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
         <FotoUpload
           userId={userId}
           listingId={listing?.id ?? null}
-          initialFotos={listing?.fotos ?? []}
+          initialFotos={normalizeFotos(listing?.fotos ?? [])}
           onChange={setFotos}
         />
 
