@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   const infra = await fetchInfrastruktur(listing.lat, listing.lon)
 
-  if (Object.keys(infra).length > 0) {
+  if (Object.values(infra).some(v => v != null)) {
     await supabase.from('listings')
       .update({ infra_json: infra })
       .eq('id', listing_id)

@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const newLon = parseFloat(coords.lon)
 
   const existingInfra = listing.infra_json as Record<string, unknown> | null
-  const hasInfra = !!existingInfra && Object.keys(existingInfra).length > 0
+  const hasInfra = !!existingInfra && Object.values(existingInfra).some(v => v != null)
 
   const addressUnchanged =
     listing.lat != null &&

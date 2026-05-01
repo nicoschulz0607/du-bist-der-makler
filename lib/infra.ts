@@ -102,7 +102,7 @@ out body 30;`
         .slice(0, count)
         .map(e => ({ name: e.name, dist: fmtDist(e.distM) }))
 
-    return {
+    const raw: InfraData = {
       schule1: pick(e => /school|kindergarten/.test(e.tags.amenity ?? ''))[0],
       schule2: pick(e => /school|kindergarten/.test(e.tags.amenity ?? ''))[1],
       einkauf1: pick(e => /supermarket|convenience|bakery/.test(e.tags.shop ?? ''))[0],
@@ -111,18 +111,12 @@ out body 30;`
       krankenhaus: pick(e => /doctors|hospital|clinic/.test(e.tags.amenity ?? ''))[1],
       oepnv1: pick(e => /station|halt|tram_stop/.test(e.tags.railway ?? '') || e.tags.highway === 'bus_stop')[0],
       autobahn: pick(e => e.tags.highway === 'motorway_junction', 1)[0],
-      freizeit1: pick(e =>
-        /park|sports_centre|swimming_pool/.test(e.tags.leisure ?? '') ||
-        /attraction|viewpoint/.test(e.tags.tourism ?? '') ||
-        e.tags.natural === 'waterfall'
-      )[0],
-      freizeit2: pick(e =>
-        /park|sports_centre|swimming_pool/.test(e.tags.leisure ?? '') ||
-        /attraction|viewpoint/.test(e.tags.tourism ?? '') ||
-        e.tags.natural === 'waterfall'
-      )[1],
+      freizeit1: pick(e => /park|sports_centre|swimming_pool/.test(e.tags.leisure ?? '') || e.tags.natural === 'waterfall')[0],
+      freizeit2: pick(e => /park|sports_centre|swimming_pool/.test(e.tags.leisure ?? '') || e.tags.natural === 'waterfall')[1],
       stadtzentrum: pick(e => /town|city/.test(e.tags.place ?? ''), 1)[0],
     }
+    // Strip undefined entries so empty results return {} not {schule1: undefined, ...}
+    return Object.fromEntries(Object.entries(raw).filter(([, v]) => v != null)) as InfraData
   } catch {
     return {}
   }
