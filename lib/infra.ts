@@ -102,7 +102,7 @@ out body 40;`
       els
         .filter(filter)
         .map(e => ({
-          name: e.tags.name ?? e.tags.amenity ?? e.tags.shop ?? e.tags.leisure ?? e.tags.railway ?? e.tags.tourism ?? '—',
+          name: e.tags.name ?? e.tags['name:de'] ?? (e.tags.amenity === 'doctors' ? 'Arztpraxis' : e.tags.amenity === 'hospital' ? 'Krankenhaus' : e.tags.amenity === 'school' ? 'Schule' : e.tags.amenity === 'kindergarten' ? 'Kindergarten' : e.tags.shop ?? e.tags.leisure ?? e.tags.railway ?? '—'),
           distM: haversineM(lat, lon, e.lat, e.lon),
         }))
         .sort((a, b) => a.distM - b.distM)
