@@ -1,10 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Bell, PenSquare } from 'lucide-react'
 import { type Tier } from '@/lib/tier'
 
-function getGreeting(name: string): string {
+function buildGreeting(name: string): string {
   const h = new Date().getHours()
   if (h < 12) return `Guten Morgen, ${name} 👋`
   if (h < 18) return `Guten Tag, ${name} 👋`
@@ -17,11 +18,16 @@ interface TopbarProps {
 }
 
 export default function Topbar({ vorname, tier }: TopbarProps) {
+  const name = vorname ?? 'du'
+  // Stable SSR value; replaced after hydration to avoid server/client time mismatch
+  const [greeting, setGreeting] = useState(`Hallo, ${name} 👋`)
+  useEffect(() => { setGreeting(buildGreeting(name)) }, [name])
+
   return (
     <header className="bg-white border-b border-[#EEEEEE] h-16 flex items-center justify-between px-8 flex-shrink-0">
       <div>
         <p className="text-[15px] font-semibold text-text-primary leading-tight">
-          {getGreeting(vorname ?? 'du')}
+          {greeting}
         </p>
         <p className="text-[13px] text-text-secondary">
           Hier ist dein aktueller Stand
