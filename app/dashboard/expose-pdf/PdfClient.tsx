@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { Download, FileText, AlertCircle, CheckCircle2, Home, Images } from 'lucide-react'
+import { ExternalLink, FileText, AlertCircle, CheckCircle2, Home, Images } from 'lucide-react'
 
 interface PdfClientProps {
   listing: {
@@ -20,9 +19,6 @@ interface PdfClientProps {
 }
 
 export default function PdfClient({ listing }: PdfClientProps) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
   if (!listing) {
     return (
       <div className="bg-white border border-[#DDDDDD] rounded-xl p-10 flex flex-col items-center text-center">
@@ -52,30 +48,6 @@ export default function PdfClient({ listing }: PdfClientProps) {
     .filter(Boolean)
     .join(' · ')
 
-  async function handleDownload() {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/expose-pdf', { method: 'POST' })
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.error ?? 'PDF konnte nicht erstellt werden.')
-        return
-      }
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `expose-${listing?.adresse_ort ?? 'objekt'}.pdf`.toLowerCase().replace(/[^a-z0-9.-]/g, '-')
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      setError('Keine Verbindung zum Server. Bitte prüfe deine Internetverbindung.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <div className="space-y-5">
       {/* Objekt-Zusammenfassung */}
@@ -91,10 +63,10 @@ export default function PdfClient({ listing }: PdfClientProps) {
         )}
       </div>
 
-      {/* Checkliste was ins PDF kommt */}
+      {/* Checkliste was ins Exposé kommt */}
       <div className="bg-white border border-[#DDDDDD] rounded-xl p-6 space-y-4">
         <p className="text-[15px] font-bold text-text-primary" style={{ letterSpacing: '-0.18px' }}>
-          Was ins PDF kommt
+          Was ins Exposé kommt
         </p>
 
         <div className="space-y-3">
@@ -135,8 +107,8 @@ export default function PdfClient({ listing }: PdfClientProps) {
                 </p>
                 <p className="text-[12px] text-text-secondary">
                   {fotoCount > 0
-                    ? `${fotoCount} Foto${fotoCount === 1 ? '' : 's'} — erstes wird Titelbild`
-                    : 'Keine Fotos — PDF ohne Bilder'}
+                    ? `${fotoCount} Foto${fotoCount === 1 ? '' : 's'} — werden auf alle Seiten verteilt`
+                    : 'Keine Fotos — Exposé ohne Bilder'}
                 </p>
               </div>
             </div>
@@ -167,30 +139,14 @@ export default function PdfClient({ listing }: PdfClientProps) {
           </div>
         </div>
 
-        {error && (
-          <div className="flex items-start gap-2 bg-[#FFF0F0] border border-[#FFCCCC] rounded-lg px-4 py-3">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
-            <p className="text-[13px] text-red-600">{error}</p>
-          </div>
-        )}
-
         <button
           type="button"
-          onClick={handleDownload}
-          disabled={loading || !hasExpose}
+          onClick={() => window.open('/api/expose-pdf', '_blank')}
+          disabled={!hasExpose}
           className="inline-flex items-center justify-center gap-2 rounded-pill bg-accent hover:bg-accent-hover text-white text-[14px] font-semibold px-6 h-11 transition-colors duration-150 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
         >
-          {loading ? (
-            <>
-              <FileText size={15} className="animate-pulse" />
-              PDF wird erstellt...
-            </>
-          ) : (
-            <>
-              <Download size={15} />
-              PDF herunterladen
-            </>
-          )}
+          <ExternalLink size={15} />
+          Exposé anzeigen
         </button>
 
         {!hasExpose && (
@@ -199,11 +155,14 @@ export default function PdfClient({ listing }: PdfClientProps) {
             <Link href="/dashboard/expose" className="text-accent font-semibold hover:underline">
               Inserat-Texte generieren
             </Link>
-            , bevor das PDF erstellt werden kann.
+            , bevor das Exposé angezeigt werden kann.
           </p>
         )}
-        {loading && (
-          <p className="text-[12px] text-text-tertiary">Das kann 10–15 Sekunden dauern. Bitte warte kurz.</p>
+
+        {hasExpose && (
+          <p className="text-[12px] text-text-tertiary">
+            Das Exposé öffnet in einem neuen Tab. Zum Speichern als PDF: Strg+P → "Als PDF speichern".
+          </p>
         )}
       </div>
     </div>

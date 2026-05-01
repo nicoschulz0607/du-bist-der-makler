@@ -14,30 +14,41 @@ async function speicherObjekt(formData: FormData) {
 
   const listingId = formData.get('listing_id') as string | null
 
+  const num = (key: string) => {
+    const v = formData.get(key)
+    return v && v !== '' ? Number(v) : null
+  }
+  const str = (key: string) => (formData.get(key) as string) || null
+
   const payload = {
     user_id: user.id,
-    objekttyp: (formData.get('objekttyp') as string) || null,
-    adresse_strasse: (formData.get('adresse_strasse') as string) || null,
-    adresse_plz: (formData.get('adresse_plz') as string) || null,
-    adresse_ort: (formData.get('adresse_ort') as string) || null,
-    wohnflaeche_qm: formData.get('wohnflaeche_qm') ? Number(formData.get('wohnflaeche_qm')) : null,
-    zimmer: formData.get('zimmer') ? Number(formData.get('zimmer')) : null,
-    baujahr: formData.get('baujahr') ? Number(formData.get('baujahr')) : null,
-    zustand: (formData.get('zustand') as string) || null,
-    preis: formData.get('preis') ? Number(formData.get('preis')) : null,
-    energieausweis_klasse: (formData.get('energieausweis_klasse') as string) || null,
-    beschreibung: (formData.get('beschreibung') as string) || null,
-    fotos: (() => {
-      try { return JSON.parse(formData.get('fotos') as string) } catch { return [] }
-    })(),
+    objekttyp: str('objekttyp'),
+    adresse_strasse: str('adresse_strasse'),
+    adresse_plz: str('adresse_plz'),
+    adresse_ort: str('adresse_ort'),
+    wohnflaeche_qm: num('wohnflaeche_qm'),
+    zimmer: num('zimmer'),
+    baujahr: num('baujahr'),
+    zustand: str('zustand'),
+    preis: num('preis'),
+    energieausweis_klasse: str('energieausweis_klasse'),
+    beschreibung: str('beschreibung'),
+    fotos: (() => { try { return JSON.parse(formData.get('fotos') as string) } catch { return [] } })(),
+    badezimmer: num('badezimmer'),
+    schlafzimmer: num('schlafzimmer'),
+    etage: str('etage'),
+    nutzflaeche_qm: num('nutzflaeche_qm'),
+    grundstueck_qm: num('grundstueck_qm'),
+    renovierungsjahr: num('renovierungsjahr'),
+    heizungsart: str('heizungsart'),
+    energieausweis_typ: str('energieausweis_typ'),
+    energieverbrauch: num('energieverbrauch'),
+    energietraeger: str('energietraeger'),
+    ausstattung_items: (() => { try { return JSON.parse(formData.get('ausstattung_items') as string) } catch { return [] } })(),
   }
 
   if (listingId) {
-    await supabase
-      .from('listings')
-      .update(payload)
-      .eq('id', listingId)
-      .eq('user_id', user.id)
+    await supabase.from('listings').update(payload).eq('id', listingId).eq('user_id', user.id)
   } else {
     await supabase.from('listings').insert({ ...payload, status: 'draft' })
   }
@@ -52,7 +63,14 @@ export default async function ObjektPage() {
 
   const { data: listing } = await supabase
     .from('listings')
-    .select('id, objekttyp, adresse_strasse, adresse_plz, adresse_ort, wohnflaeche_qm, zimmer, baujahr, zustand, preis, energieausweis_klasse, beschreibung, status, fotos')
+    .select(`
+      id, objekttyp, adresse_strasse, adresse_plz, adresse_ort,
+      wohnflaeche_qm, zimmer, baujahr, zustand, preis,
+      energieausweis_klasse, beschreibung, status, fotos,
+      badezimmer, schlafzimmer, etage, nutzflaeche_qm, grundstueck_qm,
+      renovierungsjahr, heizungsart, energieausweis_typ, energieverbrauch,
+      energietraeger, ausstattung_items
+    `)
     .eq('user_id', user.id)
     .limit(1)
     .maybeSingle()
@@ -64,7 +82,7 @@ export default async function ObjektPage() {
           Mein Objekt
         </h1>
         <p className="text-[14px] text-text-secondary">
-          Trage deine Immobiliendaten ein — Basis für Inserat-Texte, KI-Exposé PDF und die Checkliste.
+          Trage deine Immobiliendaten ein — Basis für Inserat-Texte, KI-Exposé und die Checkliste.
         </p>
       </div>
       <ObjektForm listing={listing ?? null} userId={user.id} save={speicherObjekt} />

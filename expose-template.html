@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exposé – {{TITEL}}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+
+/* ============================================================
+   RESET & PAGE SETUP
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green:        #1B6B45;
+  --green-dark:   #145538;
+  --green-light:  #E8F5EE;
+  --green-mid:    #2d8a5a;
+  --black:        #111111;
+  --gray-900:     #1a1a1a;
+  --gray-700:     #444444;
+  --gray-500:     #767676;
+  --gray-300:     #cccccc;
+  --gray-100:     #f5f5f5;
+  --white:        #ffffff;
+  --gold:         #c9a84c;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'DM Sans', -apple-system, sans-serif;
+
+  --page-w: 210mm;
+  --page-h: 297mm;
+  --margin: 14mm;
+}
+
+html { font-size: 10pt; }
+body { 
+  font-family: var(--font-body); 
+  color: var(--black);
+  background: #e8e8e8;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ============================================================
+   PAGE LAYOUT
+   ============================================================ */
+.page {
+  width: var(--page-w);
+  min-height: var(--page-h);
+  background: var(--white);
+  margin: 8mm auto;
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+  display: flex;
+  flex-direction: column;
+}
+
+@media print {
+  body { background: white; }
+  .page { margin: 0; box-shadow: none; }
+}
+
+/* ============================================================
+   SHARED COMPONENTS
+   ============================================================ */
+.page-header {
+  padding: 5mm var(--margin) 4mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 0.3mm solid var(--gray-300);
+}
+.page-header .brand {
+  font-family: var(--font-body);
+  font-size: 6.5pt;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.page-header .page-title {
+  font-size: 6pt;
+  color: var(--gray-500);
+  font-weight: 400;
+}
+
+.page-footer {
+  margin-top: auto;
+  padding: 4mm var(--margin);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 0.3mm solid var(--gray-100);
+}
+.page-footer .disclaimer {
+  font-size: 5.5pt;
+  color: var(--gray-500);
+}
+.page-footer .page-num {
+  font-size: 6pt;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+.section-label {
+  font-size: 6pt;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 3mm;
+}
+
+/* ============================================================
+   PAGE 1 — TITELSEITE
+   ============================================================ */
+.page-cover {
+  background: var(--black);
+  color: var(--white);
+  min-height: var(--page-h);
+}
+
+.cover-top-bar {
+  padding: 6mm var(--margin);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+}
+.cover-brand {
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.9);
+}
+.cover-provisionsfrei {
+  font-size: 6pt;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--green-light);
+  border: 0.3mm solid var(--green-mid);
+  padding: 1.5mm 4mm;
+  border-radius: 20mm;
+}
+
+/* Hauptfoto full-bleed */
+.cover-hero {
+  width: 100%;
+  height: 120mm;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  filter: brightness(0.75);
+}
+.cover-hero-placeholder {
+  width: 100%;
+  height: 120mm;
+  background: linear-gradient(135deg, #1a3a2a 0%, #0d1f16 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.2);
+  font-size: 9pt;
+  letter-spacing: 0.1em;
+}
+
+.cover-content {
+  padding: 8mm var(--margin) 6mm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cover-eyebrow {
+  font-size: 6.5pt;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green-light);
+  margin-bottom: 3mm;
+}
+
+.cover-title {
+  font-family: var(--font-display);
+  font-size: 22pt;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--white);
+  margin-bottom: 4mm;
+  letter-spacing: -0.02em;
+}
+
+.cover-tagline {
+  font-size: 9pt;
+  font-weight: 300;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+  margin-bottom: 8mm;
+  max-width: 140mm;
+}
+
+/* Key Facts Grid */
+.cover-facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border: 0.3mm solid rgba(255,255,255,0.15);
+  border-radius: 2mm;
+  overflow: hidden;
+  margin-bottom: 8mm;
+}
+.cover-fact {
+  padding: 4mm 5mm;
+  border-right: 0.3mm solid rgba(255,255,255,0.1);
+}
+.cover-fact:last-child { border-right: none; }
+.cover-fact-label {
+  font-size: 5.5pt;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 1.5mm;
+}
+.cover-fact-value {
+  font-size: 10pt;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.cover-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+  padding-top: 6mm;
+  border-top: 0.3mm solid rgba(255,255,255,0.12);
+}
+.cover-address {
+  font-size: 8pt;
+  color: rgba(255,255,255,0.6);
+  font-weight: 300;
+  line-height: 1.5;
+}
+.cover-address strong {
+  display: block;
+  font-size: 9.5pt;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 0.5mm;
+}
+.cover-price-block { text-align: right; }
+.cover-price-label {
+  font-size: 6pt;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 1mm;
+}
+.cover-price {
+  font-family: var(--font-display);
+  font-size: 20pt;
+  font-weight: 700;
+  color: var(--white);
+}
+.cover-price-sub {
+  font-size: 6pt;
+  color: rgba(255,255,255,0.35);
+  margin-top: 0.5mm;
+}
+
+/* ============================================================
+   PAGE 2 — HIGHLIGHTS + KURZBESCHREIBUNG
+   ============================================================ */
+.page-2-layout {
+  padding: 0 var(--margin) 6mm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6mm;
+}
+
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3mm;
+  margin-top: 2mm;
+}
+.highlight-card {
+  background: var(--green-light);
+  border-radius: 2.5mm;
+  padding: 5mm;
+  border-left: 1mm solid var(--green);
+}
+.highlight-icon {
+  font-size: 14pt;
+  margin-bottom: 2.5mm;
+  display: block;
+}
+.highlight-text {
+  font-size: 8pt;
+  font-weight: 500;
+  color: var(--gray-900);
+  line-height: 1.45;
+}
+
+.kurzbeschreibung-box {
+  background: var(--gray-100);
+  border-radius: 2.5mm;
+  padding: 6mm;
+}
+.kurzbeschreibung-text {
+  font-size: 9.5pt;
+  font-weight: 400;
+  color: var(--gray-700);
+  line-height: 1.65;
+  font-style: italic;
+}
+
+/* 2-Foto Strip */
+.foto-strip-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2mm;
+  height: 52mm;
+}
+.foto-strip-2 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1.5mm;
+}
+.foto-placeholder {
+  background: var(--gray-100);
+  border-radius: 1.5mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-300);
+  font-size: 7pt;
+  letter-spacing: 0.08em;
+}
+
+/* ============================================================
+   PAGE 3 — OBJEKTBESCHREIBUNG
+   ============================================================ */
+.text-page-layout {
+  padding: 0 var(--margin) 6mm;
+  flex: 1;
+  display: flex;
+  gap: 8mm;
+}
+
+.text-main { flex: 1; }
+.text-sidebar { width: 48mm; flex-shrink: 0; }
+
+.prose-title {
+  font-family: var(--font-display);
+  font-size: 16pt;
+  font-weight: 600;
+  color: var(--black);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 5mm;
+}
+
+.prose p {
+  font-size: 8.5pt;
+  line-height: 1.7;
+  color: var(--gray-700);
+  margin-bottom: 3.5mm;
+}
+.prose p:last-child { margin-bottom: 0; }
+
+/* Sidebar */
+.sidebar-foto {
+  width: 100%;
+  height: 50mm;
+  object-fit: cover;
+  border-radius: 2mm;
+  margin-bottom: 4mm;
+}
+.sidebar-foto-placeholder {
+  width: 100%;
+  height: 50mm;
+  background: var(--gray-100);
+  border-radius: 2mm;
+  margin-bottom: 4mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-300);
+  font-size: 7pt;
+}
+.sidebar-facts-list { list-style: none; }
+.sidebar-facts-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2.5mm 0;
+  border-bottom: 0.2mm solid var(--gray-100);
+  font-size: 7.5pt;
+}
+.sidebar-facts-list li:last-child { border-bottom: none; }
+.sidebar-facts-list .fact-label { color: var(--gray-500); font-weight: 400; }
+.sidebar-facts-list .fact-val { color: var(--black); font-weight: 600; text-align: right; }
+
+/* ============================================================
+   PAGE 4 — AUSSTATTUNG
+   ============================================================ */
+.ausstattung-layout {
+  padding: 0 var(--margin) 6mm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6mm;
+}
+
+.ausstattung-intro {
+  font-size: 8.5pt;
+  line-height: 1.7;
+  color: var(--gray-700);
+}
+
+.ausstattung-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5mm;
+}
+.ausstattung-item {
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+  padding: 3mm 3.5mm;
+  background: var(--gray-100);
+  border-radius: 1.5mm;
+}
+.ausstattung-check {
+  width: 4mm; height: 4mm;
+  background: var(--green);
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ausstattung-check::after {
+  content: '';
+  width: 2mm; height: 1.2mm;
+  border-left: 0.4mm solid white;
+  border-bottom: 0.4mm solid white;
+  transform: rotate(-45deg) translateY(-0.2mm);
+}
+.ausstattung-label {
+  font-size: 7.5pt;
+  font-weight: 500;
+  color: var(--gray-900);
+}
+
+/* 3er Foto-Strip */
+.foto-strip-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2mm;
+  height: 44mm;
+}
+.foto-strip-3 img, .foto-strip-3 .foto-placeholder {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 1.5mm;
+}
+
+/* ============================================================
+   PAGE 5 — VOLLSTÄNDIGE FAKTEN + ENERGIEAUSWEIS
+   ============================================================ */
+.fakten-layout {
+  padding: 0 var(--margin) 6mm;
+  flex: 1;
+  display: flex;
+  gap: 8mm;
+}
+
+.fakten-main { flex: 1; }
+
+.fakten-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.fakten-table tr {
+  border-bottom: 0.2mm solid var(--gray-100);
+}
+.fakten-table tr:last-child { border-bottom: none; }
+.fakten-table td {
+  padding: 3mm 2mm;
+  font-size: 8pt;
+}
+.fakten-table .td-label {
+  color: var(--gray-500);
+  font-weight: 400;
+  width: 45%;
+}
+.fakten-table .td-value {
+  color: var(--black);
+  font-weight: 600;
+}
+.fakten-table .td-divider {
+  background: var(--green);
+  color: var(--white);
+  font-size: 6.5pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2.5mm 2mm;
+  font-family: var(--font-body);
+}
+
+/* Energie-Sidebar */
+.energie-sidebar { width: 50mm; flex-shrink: 0; }
+
+.energie-scale {
+  border-radius: 2mm;
+  overflow: hidden;
+  margin-bottom: 4mm;
+}
+.energie-row {
+  display: flex;
+  align-items: center;
+  height: 8mm;
+  padding: 0 3mm;
+  position: relative;
+}
+.energie-row.active {
+  outline: 0.5mm solid var(--black);
+  outline-offset: -0.5mm;
+  z-index: 1;
+}
+.energie-letter {
+  font-weight: 700;
+  font-size: 8pt;
+  color: white;
+  width: 6mm;
+  flex-shrink: 0;
+}
+.energie-bar {
+  flex: 1;
+  height: 3mm;
+  background: rgba(255,255,255,0.3);
+  border-radius: 1mm;
+  margin: 0 2mm;
+}
+.energie-kwh {
+  font-size: 6pt;
+  color: rgba(255,255,255,0.85);
+  font-weight: 400;
+  min-width: 12mm;
+  text-align: right;
+}
+.energie-arrow {
+  position: absolute;
+  right: -2mm;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border-top: 4mm solid transparent;
+  border-bottom: 4mm solid transparent;
+  border-left: 3mm solid var(--black);
+  display: none;
+}
+.energie-row.active .energie-arrow { display: block; }
+
+.energie-info-box {
+  background: var(--gray-100);
+  border-radius: 2mm;
+  padding: 4mm;
+}
+.energie-info-title { font-size: 7pt; font-weight: 600; margin-bottom: 1.5mm; }
+.energie-info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 7pt;
+  padding: 1mm 0;
+  border-bottom: 0.2mm solid var(--gray-300);
+}
+.energie-info-row:last-child { border-bottom: none; }
+.energie-info-row .ei-label { color: var(--gray-500); }
+.energie-info-row .ei-val { font-weight: 600; }
+
+.provisionsfrei-badge {
+  margin-top: 4mm;
+  background: var(--green);
+  color: white;
+  border-radius: 2mm;
+  padding: 3mm 4mm;
+  text-align: center;
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================================
+   PAGE 6 — LAGE & INFRASTRUKTUR
+   ============================================================ */
+.lage-layout {
+  padding: 0 var(--margin) 6mm;
+  flex: 1;
+  display: flex;
+  gap: 8mm;
+}
+.lage-main { flex: 1; }
+.lage-sidebar { width: 50mm; flex-shrink: 0; }
+
+.lage-text {
+  font-size: 8.5pt;
+  line-height: 1.7;
+  color: var(--gray-700);
+  margin-bottom: 5mm;
+}
+
+.infra-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5mm;
+}
+.infra-item {
+  padding: 3.5mm 4mm;
+  background: var(--gray-100);
+  border-radius: 2mm;
+}
+.infra-category {
+  font-size: 5.5pt;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 1.5mm;
+}
+.infra-entries { list-style: none; }
+.infra-entries li {
+  font-size: 7pt;
+  color: var(--gray-700);
+  padding: 0.8mm 0;
+  display: flex;
+  justify-content: space-between;
+}
+.infra-entries .dist { color: var(--gray-500); font-weight: 500; }
+
+/* Karte Placeholder */
+.map-placeholder {
+  width: 100%;
+  height: 60mm;
+  background: linear-gradient(135deg, #e8f0e8, #d4e8d4);
+  border-radius: 2mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0.3mm solid var(--gray-300);
+  position: relative;
+  overflow: hidden;
+}
+.map-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 5mm, rgba(255,255,255,0.4) 5mm, rgba(255,255,255,0.4) 5.3mm
+  ),
+  repeating-linear-gradient(
+    90deg, transparent, transparent 5mm, rgba(255,255,255,0.4) 5mm, rgba(255,255,255,0.4) 5.3mm
+  );
+}
+.map-pin {
+  width: 6mm; height: 6mm;
+  background: var(--green);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 1mm 3mm rgba(0,0,0,0.3);
+}
+.map-pin::after {
+  content: '';
+  position: absolute;
+  inset: 1.5mm;
+  background: white;
+  border-radius: 50%;
+}
+
+/* ============================================================
+   PAGE 7 — GRUNDRISS
+   ============================================================ */
+.grundriss-layout {
+  padding: 0 var(--margin) 6mm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4mm;
+}
+.grundriss-img {
+  flex: 1;
+  border: 0.3mm solid var(--gray-300);
+  border-radius: 2mm;
+  object-fit: contain;
+  width: 100%;
+  background: var(--gray-100);
+}
+.grundriss-placeholder {
+  flex: 1;
+  border: 0.3mm dashed var(--gray-300);
+  border-radius: 2mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3mm;
+  background: var(--gray-100);
+}
+.grundriss-placeholder-icon { font-size: 24pt; }
+.grundriss-placeholder-text { font-size: 8pt; color: var(--gray-500); }
+
+.grundriss-note {
+  font-size: 7pt;
+  color: var(--gray-500);
+  text-align: center;
+}
+
+/* ============================================================
+   PAGES 8–9 — FOTO-GALERIE
+   ============================================================ */
+.galerie-layout {
+  padding: 0 var(--margin) 6mm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5mm;
+}
+
+.galerie-main-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2.5mm;
+  height: 72mm;
+}
+.galerie-secondary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5mm;
+  height: 48mm;
+}
+.galerie-bottom-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2.5mm;
+  height: 36mm;
+}
+
+.galerie-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1.5mm;
+  display: block;
+}
+
+/* ============================================================
+   PAGE 10 — KONTAKTSEITE
+   ============================================================ */
+.kontakt-page {
+  background: var(--black);
+  color: var(--white);
+}
+
+.kontakt-layout {
+  padding: 10mm var(--margin) 10mm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.kontakt-eyebrow {
+  font-size: 6.5pt;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--green-light);
+  margin-bottom: 3mm;
+}
+
+.kontakt-headline {
+  font-family: var(--font-display);
+  font-size: 22pt;
+  font-weight: 600;
+  color: var(--white);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 6mm;
+  max-width: 130mm;
+}
+
+.kontakt-card {
+  background: rgba(255,255,255,0.06);
+  border: 0.3mm solid rgba(255,255,255,0.12);
+  border-radius: 3mm;
+  padding: 7mm;
+  display: flex;
+  gap: 6mm;
+  align-items: flex-start;
+  margin-bottom: 5mm;
+}
+.kontakt-avatar {
+  width: 20mm; height: 20mm;
+  border-radius: 50%;
+  background: var(--green-dark);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11pt;
+  font-weight: 700;
+  color: white;
+  font-family: var(--font-display);
+  overflow: hidden;
+}
+.kontakt-avatar img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.kontakt-info { flex: 1; }
+.kontakt-name {
+  font-size: 12pt;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 1mm;
+  font-family: var(--font-display);
+}
+.kontakt-role {
+  font-size: 7.5pt;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 4mm;
+}
+.kontakt-details { list-style: none; }
+.kontakt-details li {
+  font-size: 8.5pt;
+  color: rgba(255,255,255,0.8);
+  padding: 1.5mm 0;
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+}
+.kontakt-details .detail-icon {
+  width: 4mm; height: 4mm;
+  background: var(--green);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.makler-badge {
+  background: var(--green);
+  border-radius: 2.5mm;
+  padding: 5mm 6mm;
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  margin-bottom: 5mm;
+}
+.makler-badge-icon { font-size: 14pt; }
+.makler-badge-text { flex: 1; }
+.makler-badge-title {
+  font-size: 8pt;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.8mm;
+}
+.makler-badge-sub {
+  font-size: 7pt;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.4;
+}
+
+.legal-block {
+  margin-top: auto;
+  padding-top: 5mm;
+  border-top: 0.3mm solid rgba(255,255,255,0.1);
+}
+.legal-text {
+  font-size: 6pt;
+  color: rgba(255,255,255,0.3);
+  line-height: 1.6;
+}
+
+.kontakt-bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4mm var(--margin);
+  border-top: 0.3mm solid rgba(255,255,255,0.1);
+}
+.kontakt-brand-bottom {
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--green-light);
+}
+.kontakt-page-num { font-size: 6pt; color: rgba(255,255,255,0.3); }
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SEITE 1 — TITELSEITE
+     ============================================================ -->
+<div class="page page-cover">
+  <div class="cover-top-bar">
+    <span class="cover-brand">du-bist-der-makler.de</span>
+    <span class="cover-provisionsfrei">✓ Provisionsfrei</span>
+  </div>
+
+  <!-- Hauptfoto: {{FOTO_HAUPTBILD_URL}} ersetzen -->
+  <img class="cover-hero" src="{{FOTO_HAUPTBILD_URL}}" alt="Hauptbild Objekt"
+       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+  <div class="cover-hero-placeholder" style="display:none;">HAUPTFOTO</div>
+
+  <div class="cover-content">
+    <div class="cover-eyebrow">{{OBJEKTTYP}} · {{ORT}}</div>
+    <h1 class="cover-title">{{TITEL}}</h1>
+    <p class="cover-tagline">{{TAGLINE}}</p>
+
+    <div class="cover-facts">
+      <div class="cover-fact">
+        <div class="cover-fact-label">Wohnfläche</div>
+        <div class="cover-fact-value">{{WOHNFLAECHE}} m²</div>
+      </div>
+      <div class="cover-fact">
+        <div class="cover-fact-label">Zimmer</div>
+        <div class="cover-fact-value">{{ZIMMER}}</div>
+      </div>
+      <div class="cover-fact">
+        <div class="cover-fact-label">Baujahr</div>
+        <div class="cover-fact-value">{{BAUJAHR}}</div>
+      </div>
+      <div class="cover-fact">
+        <div class="cover-fact-label">Energie</div>
+        <div class="cover-fact-value">Kl. {{ENERGIEKLASSE}}</div>
+      </div>
+    </div>
+
+    <div class="cover-bottom">
+      <div class="cover-address">
+        <strong>{{STRASSE}}</strong>
+        {{PLZ}} {{ORT}}
+      </div>
+      <div class="cover-price-block">
+        <div class="cover-price-label">Kaufpreis</div>
+        <div class="cover-price">{{KAUFPREIS}} €</div>
+        <div class="cover-price-sub">zzgl. Notarkosten &amp; Grunderwerbsteuer</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SEITE 2 — HIGHLIGHTS + KURZBESCHREIBUNG
+     ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="brand">du-bist-der-makler.de</span>
+    <span class="page-title">{{TITEL_KURZ}}</span>
+  </div>
+
+  <div class="page-2-layout">
+    <div>
+      <div class="section-label">Highlights</div>
+      <div class="highlights-grid">
+        <!-- {{HIGHLIGHTS}} — 3 Einträge -->
+        <div class="highlight-card">
+          <span class="highlight-icon">🏡</span>
+          <span class="highlight-text">{{HIGHLIGHT_1}}</span>
+        </div>
+        <div class="highlight-card">
+          <span class="highlight-icon">📍</span>
+          <span class="highlight-text">{{HIGHLIGHT_2}}</span>
+        </div>
+        <div class="highlight-card">
+          <span class="highlight-icon">⭐</span>
+          <span class="highlight-text">{{HIGHLIGHT_3}}</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Kurzbeschreibung</div>
+      <div class="kurzbeschreibung-box">
+        <p class="kurzbeschreibung-text">{{BESCHREIBUNG_KURZ}}</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Einblicke</div>
+      <div class="foto-strip-2">
+        <img src="{{FOTO_2_URL}}" alt="Foto 2"
+             onerror="this.outerHTML='<div class=\'foto-placeholder\'>FOTO 2</div>'">
+        <img src="{{FOTO_3_URL}}" alt="Foto 3"
+             onerror="this.outerHTML='<div class=\'foto-placeholder\'>FOTO 3</div>'">
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="disclaimer">du-bist-der-makler.de · Nicht zur gewerblichen Nutzung · Alle Angaben ohne Gewähr</span>
+    <span class="page-num">2</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     SEITE 3 — OBJEKTBESCHREIBUNG
+     ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="brand">du-bist-der-makler.de</span>
+    <span class="page-title">Objektbeschreibung</span>
+  </div>
+
+  <div class="text-page-layout" style="padding-top: 5mm;">
+    <div class="text-main">
+      <div class="section-label">Objektbeschreibung</div>
+      <h2 class="prose-title">{{TITEL}}</h2>
+      <div class="prose">
+        <!-- {{BESCHREIBUNG_LANG}} — 4–6 Absätze, KI-generiert -->
+        <p>{{BESCHREIBUNG_ABSATZ_1}}</p>
+        <p>{{BESCHREIBUNG_ABSATZ_2}}</p>
+        <p>{{BESCHREIBUNG_ABSATZ_3}}</p>
+        <p>{{BESCHREIBUNG_ABSATZ_4}}</p>
+        <p>{{BESCHREIBUNG_ABSATZ_5}}</p>
+      </div>
+    </div>
+
+    <div class="text-sidebar">
+      <img class="sidebar-foto" src="{{FOTO_4_URL}}" alt="Foto 4"
+           onerror="this.outerHTML='<div class=\'sidebar-foto-placeholder\'>FOTO 4</div>'">
+
+      <div class="section-label">Auf einen Blick</div>
+      <ul class="sidebar-facts-list">
+        <li><span class="fact-label">Objekttyp</span><span class="fact-val">{{OBJEKTTYP}}</span></li>
+        <li><span class="fact-label">Wohnfläche</span><span class="fact-val">{{WOHNFLAECHE}} m²</span></li>
+        <li><span class="fact-label">Zimmer</span><span class="fact-val">{{ZIMMER}}</span></li>
+        <li><span class="fact-label">Badezimmer</span><span class="fact-val">{{BADEZIMMER}}</span></li>
+        <li><span class="fact-label">Baujahr</span><span class="fact-val">{{BAUJAHR}}</span></li>
+        <li><span class="fact-label">Zustand</span><span class="fact-val">{{ZUSTAND}}</span></li>
+        <li><span class="fact-label">Etage</span><span class="fact-val">{{ETAGE}}</span></li>
+        <li><span class="fact-label">Kaufpreis</span><span class="fact-val">{{KAUFPREIS}} €</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="disclaimer">du-bist-der-makler.de · Alle Angaben ohne Gewähr</span>
+    <span class="page-num">3</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     SEITE 4 — AUSSTATTUNG
+     ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="brand">du-bist-der-makler.de</span>
+    <span class="page-title">Ausstattung</span>
+  </div>
+
+  <div class="ausstattung-layout" style="padding-top: 5mm;">
+    <div>
+      <div class="section-label">Ausstattung &amp; Besonderheiten</div>
+      <p class="ausstattung-intro">{{AUSSTATTUNG_TEXT}}</p>
+    </div>
+
+    <div>
+      <div class="ausstattung-grid">
+        <!-- {{AUSSTATTUNG_ITEMS}} — dynamisch aus Checkboxen -->
+        <div class="ausstattung-item"><div class="ausstattung-check"></div><span class="ausstattung-label">{{AUSSTATTUNG_1}}</span></div>
+        <div class="ausstattung-item"><div class="ausstattung-check"></div><span class="ausstattung-label">{{AUSSTATTUNG_2}}</span></div>
+        <div class="ausstattung-item"><div class="ausstattung-check"></div><span class="ausstattung-label">{{AUSSTATTUNG_3}}</span></div>
+        <div class="ausstattung-item"><div class="ausstattung-check"></div><span class="ausstattung-label">{{AUSSTATTUNG_4}}</span></div>
+        <div class="ausstattung-item"><div class="ausstattung-check"></div><span class="ausstattung-label">{{AUSSTATTUNG_5}}</span></div>
+        <div class="ausstattung-item"><div class="ausstattung-check"></div><span class="ausstattung-label">{{AUSSTATTUNG_6}}</span></div>
+        <div class="ausstattung-item"><div class="ausstattung-check"></div><span class="ausstattung-label">{{AUSSTATTUNG_7}}</span></div>
+        <div class="ausstattung-item"><div class="ausstattung-check"></div><span class="ausstattung-label">{{AUSSTATTUNG_8}}</span></div>
+        <div class="ausstattung-item"><div class="ausstattung-check"></div><span class="ausstattung-label">{{AUSSTATTUNG_9}}</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Weitere Eindrücke</div>
+      <div class="foto-strip-3">
+        <img class="galerie-img" src="{{FOTO_5_URL}}" alt="Foto 5"
+             onerror="this.outerHTML='<div class=\'foto-placeholder\'>FOTO 5</div>'">
+        <img class="galerie-img" src="{{FOTO_6_URL}}" alt="Foto 6"
+             onerror="this.outerHTML='<div class=\'foto-placeholder\'>FOTO 6</div>'">
+        <img class="galerie-img" src="{{FOTO_7_URL}}" alt="Foto 7"
+             onerror="this.outerHTML='<div class=\'foto-placeholder\'>FOTO 7</div>'">
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="disclaimer">du-bist-der-makler.de · Alle Angaben ohne Gewähr</span>
+    <span class="page-num">4</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     SEITE 5 — VOLLSTÄNDIGE FAKTEN + ENERGIEAUSWEIS
+     ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="brand">du-bist-der-makler.de</span>
+    <span class="page-title">Objektdaten &amp; Energieausweis</span>
+  </div>
+
+  <div class="fakten-layout" style="padding-top: 5mm;">
+    <div class="fakten-main">
+      <div class="section-label">Vollständige Objektdaten</div>
+      <table class="fakten-table">
+        <tr><td colspan="2" class="td-divider">Objekt</td></tr>
+        <tr><td class="td-label">Objekttyp</td><td class="td-value">{{OBJEKTTYP}}</td></tr>
+        <tr><td class="td-label">Adresse</td><td class="td-value">{{STRASSE}}, {{PLZ}} {{ORT}}</td></tr>
+        <tr><td class="td-label">Wohnfläche</td><td class="td-value">ca. {{WOHNFLAECHE}} m²</td></tr>
+        <tr><td class="td-label">Nutzfläche</td><td class="td-value">{{NUTZFLAECHE}} m²</td></tr>
+        <tr><td class="td-label">Grundstücksgröße</td><td class="td-value">{{GRUNDSTUECK}} m²</td></tr>
+        <tr><td class="td-label">Zimmer gesamt</td><td class="td-value">{{ZIMMER}}</td></tr>
+        <tr><td class="td-label">davon Schlafzimmer</td><td class="td-value">{{SCHLAFZIMMER}}</td></tr>
+        <tr><td class="td-label">Badezimmer</td><td class="td-value">{{BADEZIMMER}}</td></tr>
+        <tr><td class="td-label">Etage / Stockwerke</td><td class="td-value">{{ETAGE}}</td></tr>
+        <tr><td class="td-label">Baujahr</td><td class="td-value">{{BAUJAHR}}</td></tr>
+        <tr><td class="td-label">Letztes Renovierungsjahr</td><td class="td-value">{{RENOVIERUNGSJAHR}}</td></tr>
+        <tr><td class="td-label">Zustand</td><td class="td-value">{{ZUSTAND}}</td></tr>
+        <tr><td colspan="2" class="td-divider">Kosten</td></tr>
+        <tr><td class="td-label">Kaufpreis</td><td class="td-value">{{KAUFPREIS}} €</td></tr>
+        <tr><td class="td-label">Preis pro m²</td><td class="td-value">ca. {{PREIS_PRO_QM}} €/m²</td></tr>
+        <tr><td class="td-label">Grundsteuer p.a.</td><td class="td-value">{{GRUNDSTEUER}} €</td></tr>
+        <tr><td class="td-label">Provision</td><td class="td-value">Keine — provisionsfrei</td></tr>
+        <tr><td colspan="2" class="td-divider">Heizung &amp; Energie</td></tr>
+        <tr><td class="td-label">Heizungsart</td><td class="td-value">{{HEIZUNGSART}}</td></tr>
+        <tr><td class="td-label">Energieausweis-Typ</td><td class="td-value">{{ENERGIEAUSWEIS_TYP}}</td></tr>
+        <tr><td class="td-label">Energieklasse</td><td class="td-value">{{ENERGIEKLASSE}}</td></tr>
+        <tr><td class="td-label">Energieverbrauch</td><td class="td-value">{{ENERGIEVERBRAUCH}} kWh/m²a</td></tr>
+        <tr><td class="td-label">Wesentlicher Energieträger</td><td class="td-value">{{ENERGIETRAEGER}}</td></tr>
+      </table>
+    </div>
+
+    <div class="energie-sidebar">
+      <div class="section-label">Energieausweis</div>
+      <div class="energie-scale">
+        <div class="energie-row" style="background:#00a550;"><span class="energie-letter">A+</span><div class="energie-bar"></div><span class="energie-kwh">&lt;30</span><div class="energie-arrow"></div></div>
+        <div class="energie-row" style="background:#50b848;"><span class="energie-letter">A</span><div class="energie-bar"></div><span class="energie-kwh">&lt;50</span><div class="energie-arrow"></div></div>
+        <div class="energie-row" style="background:#c8d400;"><span class="energie-letter">B</span><div class="energie-bar"></div><span class="energie-kwh">&lt;75</span><div class="energie-arrow"></div></div>
+        <!-- active Klasse dynamisch setzen je nach {{ENERGIEKLASSE}} -->
+        <div class="energie-row active" style="background:#ffd200;"><span class="energie-letter">C</span><div class="energie-bar"></div><span class="energie-kwh">&lt;100</span><div class="energie-arrow"></div></div>
+        <div class="energie-row" style="background:#f7941d;"><span class="energie-letter">D</span><div class="energie-bar"></div><span class="energie-kwh">&lt;130</span><div class="energie-arrow"></div></div>
+        <div class="energie-row" style="background:#f15a29;"><span class="energie-letter">E</span><div class="energie-bar"></div><span class="energie-kwh">&lt;160</span><div class="energie-arrow"></div></div>
+        <div class="energie-row" style="background:#ed1c24;"><span class="energie-letter">F</span><div class="energie-bar"></div><span class="energie-kwh">&lt;200</span><div class="energie-arrow"></div></div>
+        <div class="energie-row" style="background:#c1272d;"><span class="energie-letter">G</span><div class="energie-bar"></div><span class="energie-kwh">&lt;250</span><div class="energie-arrow"></div></div>
+        <div class="energie-row" style="background:#6d1f26;"><span class="energie-letter">H</span><div class="energie-bar"></div><span class="energie-kwh">&gt;250</span><div class="energie-arrow"></div></div>
+      </div>
+
+      <div class="energie-info-box">
+        <div class="energie-info-title">Energiedaten</div>
+        <div class="energie-info-row"><span class="ei-label">Klasse</span><span class="ei-val">{{ENERGIEKLASSE}}</span></div>
+        <div class="energie-info-row"><span class="ei-label">Verbrauch</span><span class="ei-val">{{ENERGIEVERBRAUCH}} kWh/m²a</span></div>
+        <div class="energie-info-row"><span class="ei-label">Ausweis-Typ</span><span class="ei-val">{{ENERGIEAUSWEIS_TYP}}</span></div>
+        <div class="energie-info-row"><span class="ei-label">Heizung</span><span class="ei-val">{{HEIZUNGSART}}</span></div>
+      </div>
+
+      <div class="provisionsfrei-badge">✓ Provisionsfrei für Käufer</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="disclaimer">du-bist-der-makler.de · Alle Angaben ohne Gewähr</span>
+    <span class="page-num">5</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     SEITE 6 — LAGE & INFRASTRUKTUR
+     ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="brand">du-bist-der-makler.de</span>
+    <span class="page-title">Lage &amp; Infrastruktur</span>
+  </div>
+
+  <div class="lage-layout" style="padding-top: 5mm;">
+    <div class="lage-main">
+      <div class="section-label">Lage</div>
+      <p class="lage-text">{{LAGE_TEXT}}</p>
+
+      <div class="section-label" style="margin-top: 4mm;">Infrastruktur in der Nähe</div>
+      <div class="infra-grid">
+        <div class="infra-item">
+          <div class="infra-category">Bildung</div>
+          <ul class="infra-entries">
+            <li><span>{{SCHULE_1}}</span><span class="dist">{{SCHULE_1_DIST}}</span></li>
+            <li><span>{{SCHULE_2}}</span><span class="dist">{{SCHULE_2_DIST}}</span></li>
+          </ul>
+        </div>
+        <div class="infra-item">
+          <div class="infra-category">Einkauf</div>
+          <ul class="infra-entries">
+            <li><span>{{EINKAUF_1}}</span><span class="dist">{{EINKAUF_1_DIST}}</span></li>
+            <li><span>{{EINKAUF_2}}</span><span class="dist">{{EINKAUF_2_DIST}}</span></li>
+          </ul>
+        </div>
+        <div class="infra-item">
+          <div class="infra-category">Gesundheit</div>
+          <ul class="infra-entries">
+            <li><span>{{ARZT_1}}</span><span class="dist">{{ARZT_1_DIST}}</span></li>
+            <li><span>{{KRANKENHAUS}}</span><span class="dist">{{KRANKENHAUS_DIST}}</span></li>
+          </ul>
+        </div>
+        <div class="infra-item">
+          <div class="infra-category">Verkehr</div>
+          <ul class="infra-entries">
+            <li><span>{{OEPNV_1}}</span><span class="dist">{{OEPNV_1_DIST}}</span></li>
+            <li><span>{{AUTOBAHN}}</span><span class="dist">{{AUTOBAHN_DIST}}</span></li>
+          </ul>
+        </div>
+        <div class="infra-item">
+          <div class="infra-category">Freizeit</div>
+          <ul class="infra-entries">
+            <li><span>{{FREIZEIT_1}}</span><span class="dist">{{FREIZEIT_1_DIST}}</span></li>
+            <li><span>{{FREIZEIT_2}}</span><span class="dist">{{FREIZEIT_2_DIST}}</span></li>
+          </ul>
+        </div>
+        <div class="infra-item">
+          <div class="infra-category">Zentrum</div>
+          <ul class="infra-entries">
+            <li><span>{{STADTZENTRUM}}</span><span class="dist">{{STADTZENTRUM_DIST}}</span></li>
+            <li><span>{{GROSSSTADT}}</span><span class="dist">{{GROSSSTADT_DIST}}</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="lage-sidebar">
+      <div class="section-label">Standort</div>
+      <div class="map-placeholder">
+        <div class="map-pin"></div>
+      </div>
+      <p style="font-size: 7pt; color: var(--gray-500); text-align: center; margin-top: 2mm;">
+        {{STRASSE}}, {{PLZ}} {{ORT}}
+      </p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="disclaimer">du-bist-der-makler.de · Alle Angaben ohne Gewähr</span>
+    <span class="page-num">6</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     SEITE 7 — GRUNDRISS
+     ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="brand">du-bist-der-makler.de</span>
+    <span class="page-title">Grundriss</span>
+  </div>
+
+  <div class="grundriss-layout" style="padding-top: 5mm;">
+    <div class="section-label">Grundriss</div>
+
+    <!-- {{GRUNDRISS_URL}} — falls vorhanden -->
+    <img class="grundriss-img" src="{{GRUNDRISS_URL}}" alt="Grundriss"
+         onerror="this.style.display='none'; document.getElementById('grundriss-placeholder').style.display='flex';">
+    <div class="grundriss-placeholder" id="grundriss-placeholder" style="display:none;">
+      <div class="grundriss-placeholder-icon">📐</div>
+      <div class="grundriss-placeholder-text">Grundriss nicht hinterlegt</div>
+    </div>
+
+    <p class="grundriss-note">Dieser Grundriss dient zur groben Orientierung. Maßangaben ohne Gewähr. Bitte entnehmen Sie genaue Maße dem Bauplan.</p>
+  </div>
+
+  <div class="page-footer">
+    <span class="disclaimer">du-bist-der-makler.de · Grundriss ohne Gewähr</span>
+    <span class="page-num">7</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     SEITE 8 — FOTO-GALERIE (Teil 1)
+     ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="brand">du-bist-der-makler.de</span>
+    <span class="page-title">Foto-Galerie</span>
+  </div>
+
+  <div class="galerie-layout" style="padding-top: 5mm;">
+    <div class="section-label">Eindrücke</div>
+
+    <div class="galerie-main-row">
+      <img class="galerie-img" src="{{FOTO_8_URL}}" alt="Foto 8"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 8</div>'">
+      <img class="galerie-img" src="{{FOTO_9_URL}}" alt="Foto 9"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 9</div>'">
+    </div>
+
+    <div class="galerie-secondary-row">
+      <img class="galerie-img" src="{{FOTO_10_URL}}" alt="Foto 10"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 10</div>'">
+      <img class="galerie-img" src="{{FOTO_11_URL}}" alt="Foto 11"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 11</div>'">
+      <img class="galerie-img" src="{{FOTO_12_URL}}" alt="Foto 12"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 12</div>'">
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="disclaimer">du-bist-der-makler.de · Alle Angaben ohne Gewähr</span>
+    <span class="page-num">8</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     SEITE 9 — FOTO-GALERIE (Teil 2)
+     ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="brand">du-bist-der-makler.de</span>
+    <span class="page-title">Foto-Galerie</span>
+  </div>
+
+  <div class="galerie-layout" style="padding-top: 5mm;">
+    <div class="galerie-secondary-row">
+      <img class="galerie-img" src="{{FOTO_13_URL}}" alt="Foto 13"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 13</div>'">
+      <img class="galerie-img" src="{{FOTO_14_URL}}" alt="Foto 14"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 14</div>'">
+      <img class="galerie-img" src="{{FOTO_15_URL}}" alt="Foto 15"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 15</div>'">
+    </div>
+
+    <div class="galerie-bottom-row">
+      <img class="galerie-img" src="{{FOTO_16_URL}}" alt="Foto 16"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 16</div>'">
+      <img class="galerie-img" src="{{FOTO_17_URL}}" alt="Foto 17"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 17</div>'">
+      <img class="galerie-img" src="{{FOTO_18_URL}}" alt="Foto 18"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 18</div>'">
+      <img class="galerie-img" src="{{FOTO_19_URL}}" alt="Foto 19"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 19</div>'">
+    </div>
+
+    <!-- Hauptfoto nochmal groß als Abschluss -->
+    <div class="galerie-main-row" style="height: 60mm;">
+      <img class="galerie-img" src="{{FOTO_20_URL}}" alt="Foto 20"
+           onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'height:100%\'>FOTO 20</div>'">
+      <div style="display: flex; flex-direction: column; gap: 2.5mm;">
+        <img class="galerie-img" src="{{FOTO_21_URL}}" alt="Foto 21" style="flex:1;"
+             onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'flex:1\'>FOTO 21</div>'">
+        <img class="galerie-img" src="{{FOTO_22_URL}}" alt="Foto 22" style="flex:1;"
+             onerror="this.outerHTML='<div class=\'foto-placeholder galerie-img\' style=\'flex:1\'>FOTO 22</div>'">
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="disclaimer">du-bist-der-makler.de · Alle Angaben ohne Gewähr</span>
+    <span class="page-num">9</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     SEITE 10 — KONTAKT
+     ============================================================ -->
+<div class="page page-cover kontakt-page">
+  <div class="cover-top-bar">
+    <span class="cover-brand">du-bist-der-makler.de</span>
+    <span class="cover-provisionsfrei">✓ Provisionsfrei</span>
+  </div>
+
+  <div class="kontakt-layout" style="padding-top: 16mm;">
+    <div class="kontakt-eyebrow">Interesse? Kontakt aufnehmen</div>
+    <h2 class="kontakt-headline">Wir freuen uns auf Ihre Anfrage.</h2>
+
+    <!-- Verkäufer-Kontakt -->
+    <div class="kontakt-card">
+      <div class="kontakt-avatar">
+        <img src="{{VERKAEUFER_FOTO_URL}}" alt="Verkäufer"
+             onerror="this.outerHTML='{{VERKAEUFER_INITIALEN}}'">
+      </div>
+      <div class="kontakt-info">
+        <div class="kontakt-name">{{VERKAEUFER_NAME}}</div>
+        <div class="kontakt-role">Privatverkäufer · Direktkontakt</div>
+        <ul class="kontakt-details">
+          <li><div class="detail-icon"></div>{{VERKAEUFER_TELEFON}}</li>
+          <li><div class="detail-icon"></div>{{VERKAEUFER_EMAIL}}</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Makler-Support Badge (nur Premium) -->
+    <div class="makler-badge">
+      <div class="makler-badge-icon">🏅</div>
+      <div class="makler-badge-text">
+        <div class="makler-badge-title">Makler-Support durch du-bist-der-makler.de</div>
+        <div class="makler-badge-sub">Professionelle Begleitung im Hintergrund — lizenzierter Immobilienmakler steht bei Fragen zur Verfügung.</div>
+      </div>
+    </div>
+
+    <div class="legal-block">
+      <p class="legal-text">
+        Dieses Exposé wurde mit Unterstützung von KI-Tools auf du-bist-der-makler.de erstellt und dient
+        ausschließlich zur Information. Alle Angaben ohne Gewähr. Irrtümer und Änderungen vorbehalten.
+        du-bist-der-makler.de ist kein Makler und erhebt keine Provision. Für rechtliche und steuerliche
+        Fragen wenden Sie sich bitte an einen Notar oder Rechtsanwalt.
+        © {{JAHR}} du-bist-der-makler.de · Nicht zur gewerblichen Nutzung.
+      </p>
+    </div>
+  </div>
+
+  <div class="kontakt-bottom-bar">
+    <span class="kontakt-brand-bottom">du-bist-der-makler.de</span>
+    <span class="kontakt-page-num">10</span>
+  </div>
+</div>
+
+</body>
+</html>
