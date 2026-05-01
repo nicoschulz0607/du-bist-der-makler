@@ -41,6 +41,9 @@ export async function geocodeAddress(
 }
 
 const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://lz4.overpass-api.de/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
 ]
@@ -51,7 +54,11 @@ async function runOverpassQuery(q: string): Promise<Array<{ lat: number; lon: nu
       const res = await fetch(endpoint, {
         method: 'POST',
         body: new URLSearchParams({ data: q }).toString(),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'User-Agent': 'du-bist-der-makler.de/1.0 (immobilien-listing-tool)',
+        },
         signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) {
