@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Upload, X, Loader2, AlertCircle, ChevronDown } from 'lucide-react'
+import { Upload, X, Loader2, AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type FotoItem, RAUMTYPEN } from '@/lib/foto'
 
@@ -13,6 +13,9 @@ interface FotoState {
   ki_konfidenz?: number | null
   raumtyp_manuell?: boolean
   analyse_status: 'uploading' | 'analysing' | 'done' | 'error'
+  merkmale?: string[] | null
+  zustand?: string | null
+  score?: number | null
 }
 
 interface FotoUploadProps {
@@ -45,6 +48,9 @@ function toFotoItem(s: FotoState): FotoItem | null {
         : s.analyse_status === 'done'
         ? 'analysiert'
         : 'fehler',
+    merkmale: s.merkmale,
+    zustand: s.zustand,
+    score: s.score,
   }
 }
 
@@ -58,14 +64,19 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
       ki_konfidenz: f.ki_konfidenz,
       raumtyp_manuell: f.raumtyp_manuell,
       analyse_status: f.analyse_status === 'fehler' ? 'error' : 'done',
+      merkmale: f.merkmale ?? null,
+      zustand: f.zustand ?? null,
+      score: f.score ?? null,
     }))
   )
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
+  const [lightboxId, setLightboxId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const isUploading = fotoStates.some(f => f.analyse_status === 'uploading')
   const completedCount = fotoStates.filter(f => f.url).length
+  const lightboxIndex = lightboxId ? fotoStates.findIndex(f => f.id === lightboxId) : -1
 
   useEffect(() => {
     const items = fotoStates.map(toFotoItem).filter((f): f is FotoItem => f !== null)
@@ -104,7 +115,14 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
       signal: AbortSignal.timeout(20000),
     })
     if (!res.ok) throw new Error('analyze failed')
-    return res.json() as Promise<{ raumtyp: string | null; beschreibung: string | null; konfidenz: number }>
+    return res.json() as Promise<{
+      raumtyp: string | null
+      beschreibung: string | null
+      konfidenz: number
+      merkmale: string[] | null
+      zustand: string | null
+      score: number | null
+    }>
   }
 
   async function handleFiles(files: FileList) {
@@ -170,7 +188,16 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
             setFotoStates(prev => {
               const next = prev.map(f =>
                 f.id === tempId
-                  ? { ...f, raumtyp: result.raumtyp, beschreibung: result.beschreibung, ki_konfidenz: result.konfidenz, analyse_status: 'done' as const }
+                  ? {
+                      ...f,
+                      raumtyp: result.raumtyp,
+                      beschreibung: result.beschreibung,
+                      ki_konfidenz: result.konfidenz,
+                      merkmale: result.merkmale,
+                      zustand: result.zustand,
+                      score: result.score,
+                      analyse_status: 'done' as const,
+                    }
                   : f
               )
               finalStates = next
@@ -202,6 +229,26 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
   function handleRaumtypChange(id: string, raumtyp: string) {
     setFotoStates(prev => prev.map(f => f.id === id ? { ...f, raumtyp, raumtyp_manuell: true, analyse_status: 'done' } : f))
     setOpenDropdownId(null)
+  }
+
+  function handleLightboxSave(id: string, updates: { raumtyp: string | null; beschreibung: string | null }) {
+    const supabase = createClient()
+    let savedStates: FotoState[] = []
+    setFotoStates(prev => {
+      const next = prev.map(f =>
+        f.id === id
+          ? { ...f, raumtyp: updates.raumtyp, beschreibung: updates.beschreibung, raumtyp_manuell: true }
+          : f
+      )
+      savedStates = next
+      return next
+    })
+    if (listingId) {
+      Promise.resolve().then(() => {
+        const items = savedStates.map(toFotoItem).filter((f): f is FotoItem => f !== null)
+        supabase.from('listings').update({ fotos: items }).eq('id', listingId).eq('user_id', userId).then(() => {})
+      })
+    }
   }
 
   return (
@@ -262,12 +309,23 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
               onDropdownToggle={() => setOpenDropdownId(prev => prev === foto.id ? null : foto.id)}
               onRaumtypChange={(rt) => handleRaumtypChange(foto.id, rt)}
               onDelete={() => handleDelete(foto.id)}
+              onOpen={() => setLightboxId(foto.id)}
             />
           ))}
         </div>
       )}
 
       {openDropdownId && <div className="fixed inset-0 z-10" onClick={() => setOpenDropdownId(null)} />}
+
+      {lightboxId !== null && lightboxIndex >= 0 && (
+        <FotoLightbox
+          fotos={fotoStates}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxId(null)}
+          onNavigate={(newIndex) => setLightboxId(fotoStates[newIndex].id)}
+          onSave={handleLightboxSave}
+        />
+      )}
     </div>
   )
 }
@@ -279,9 +337,10 @@ interface FotoKachelProps {
   onDropdownToggle: () => void
   onRaumtypChange: (raumtyp: string) => void
   onDelete: () => void
+  onOpen: () => void
 }
 
-function FotoKachel({ foto, isTitelbild, isDropdownOpen, onDropdownToggle, onRaumtypChange, onDelete }: FotoKachelProps) {
+function FotoKachel({ foto, isTitelbild, isDropdownOpen, onDropdownToggle, onRaumtypChange, onDelete, onOpen }: FotoKachelProps) {
   const isUnsicher = foto.ki_konfidenz != null && foto.ki_konfidenz < 0.7 && !foto.raumtyp_manuell
   const showBadge = (foto.analyse_status === 'done' || foto.analyse_status === 'error') && foto.url
 
@@ -292,7 +351,10 @@ function FotoKachel({ foto, isTitelbild, isDropdownOpen, onDropdownToggle, onRau
         <img
           src={foto.url}
           alt="Foto"
-          className={`w-full h-full object-cover rounded-[6px] ${foto.analyse_status === 'analysing' ? 'ring-2 ring-accent' : ''}`}
+          loading="lazy"
+          decoding="async"
+          onClick={foto.analyse_status === 'done' ? onOpen : undefined}
+          className={`w-full h-full object-cover rounded-[6px] ${foto.analyse_status === 'done' ? 'cursor-pointer' : ''} ${foto.analyse_status === 'analysing' ? 'ring-2 ring-accent' : ''}`}
         />
       ) : (
         <div className="w-full h-full rounded-[6px] bg-[#F0F0F0] flex flex-col items-center justify-center gap-1">
@@ -358,6 +420,221 @@ function FotoKachel({ foto, isTitelbild, isDropdownOpen, onDropdownToggle, onRau
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+interface FotoLightboxProps {
+  fotos: FotoState[]
+  currentIndex: number
+  onClose: () => void
+  onNavigate: (newIndex: number) => void
+  onSave: (id: string, updates: { raumtyp: string | null; beschreibung: string | null }) => void
+}
+
+function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: FotoLightboxProps) {
+  const foto = fotos[currentIndex]
+  const visibleFotos = fotos.filter(f => f.url)
+  const visibleIndex = visibleFotos.findIndex(f => f.id === foto.id)
+
+  const [editRaumtyp, setEditRaumtyp] = useState<string | null>(foto.raumtyp ?? null)
+  const [editBeschreibung, setEditBeschreibung] = useState<string>(foto.beschreibung ?? '')
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [showRaumtypDropdown, setShowRaumtypDropdown] = useState(false)
+
+  // Sync editable state when navigating
+  useEffect(() => {
+    const current = fotos[currentIndex]
+    setEditRaumtyp(current.raumtyp ?? null)
+    setEditBeschreibung(current.beschreibung ?? '')
+    setSaveStatus('idle')
+    setShowRaumtypDropdown(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex])
+
+  // Keyboard navigation
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key === 'ArrowLeft' && currentIndex > 0) onNavigate(currentIndex - 1)
+      if (e.key === 'ArrowRight' && currentIndex < fotos.length - 1) onNavigate(currentIndex + 1)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [currentIndex, fotos.length, onClose, onNavigate])
+
+  function handleSave() {
+    setSaveStatus('saving')
+    onSave(foto.id, { raumtyp: editRaumtyp, beschreibung: editBeschreibung })
+    setTimeout(() => setSaveStatus('saved'), 300)
+    setTimeout(() => setSaveStatus('idle'), 2000)
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* LEFT: Photo */}
+        <div className="flex-1 bg-black flex items-center justify-center min-w-0 relative">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={foto.url ?? ''}
+            alt={foto.raumtyp ?? 'Foto'}
+            className="max-w-full max-h-[90vh] object-contain"
+          />
+
+          {currentIndex > 0 && (
+            <button
+              type="button"
+              onClick={() => onNavigate(currentIndex - 1)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
+
+          {currentIndex < fotos.length - 1 && (
+            <button
+              type="button"
+              onClick={() => onNavigate(currentIndex + 1)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+            >
+              <ChevronRight size={20} />
+            </button>
+          )}
+
+          <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-[11px] font-medium px-2 py-0.5 rounded-full">
+            {visibleIndex + 1} / {visibleFotos.length}
+          </span>
+        </div>
+
+        {/* RIGHT: Edit panel */}
+        <div className="w-72 flex-shrink-0 flex flex-col border-l border-[#EEEEEE] overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#EEEEEE]">
+            <h3 className="text-[14px] font-bold text-text-primary">Foto bearbeiten</h3>
+            <button type="button" onClick={onClose} className="text-text-tertiary hover:text-text-primary transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="p-4 space-y-4 flex-1">
+            {/* Raumtyp */}
+            <div>
+              <label className="block text-[12px] font-semibold text-text-secondary mb-1">Raumtyp</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowRaumtypDropdown(prev => !prev)}
+                  className="w-full flex items-center justify-between gap-2 border border-[#DDDDDD] rounded-[8px] px-3 py-2 text-[13px] text-text-primary bg-white hover:border-[#AAAAAA] transition-colors"
+                >
+                  <span className="truncate">{editRaumtyp ?? 'Nicht erkannt'}</span>
+                  <ChevronDown size={14} className="flex-shrink-0 text-text-tertiary" />
+                </button>
+                {showRaumtypDropdown && (
+                  <div className="absolute top-full left-0 mt-1 w-full bg-white border border-[#DDDDDD] rounded-[8px] shadow-lg z-10 max-h-48 overflow-y-auto">
+                    {RAUMTYPEN.map(rt => (
+                      <button
+                        key={rt}
+                        type="button"
+                        onClick={() => { setEditRaumtyp(rt); setShowRaumtypDropdown(false) }}
+                        className={`w-full text-left px-3 py-2 text-[13px] hover:bg-[#F7FFF9] transition-colors ${editRaumtyp === rt ? 'font-semibold text-accent' : 'text-text-primary'}`}
+                      >
+                        {rt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Beschreibung */}
+            <div>
+              <label className="block text-[12px] font-semibold text-text-secondary mb-1">Beschreibung</label>
+              <textarea
+                value={editBeschreibung}
+                onChange={e => setEditBeschreibung(e.target.value)}
+                rows={3}
+                className="w-full border border-[#DDDDDD] rounded-[8px] px-3 py-2 text-[13px] text-text-primary bg-white outline-none resize-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all placeholder:text-text-tertiary"
+                placeholder="Beschreibung dieses Fotos..."
+              />
+            </div>
+
+            {/* Merkmale (only if analysed) */}
+            {foto.merkmale && foto.merkmale.length > 0 && (
+              <div>
+                <label className="block text-[12px] font-semibold text-text-secondary mb-1.5">Merkmale</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {foto.merkmale.map(m => (
+                    <span key={m} className="inline-block bg-[#E8F5EE] text-accent text-[11px] font-medium px-2 py-0.5 rounded-full">
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Zustand (only if analysed) */}
+            {foto.zustand && (
+              <div>
+                <label className="block text-[12px] font-semibold text-text-secondary mb-1">Zustand</label>
+                <span className={`inline-block text-[12px] font-medium px-2.5 py-1 rounded-full ${
+                  foto.zustand === 'gut'
+                    ? 'bg-[#E8F5EE] text-accent'
+                    : foto.zustand === 'mittel'
+                    ? 'bg-orange-50 text-orange-700'
+                    : 'bg-red-50 text-red-700'
+                }`}>
+                  {foto.zustand === 'gut' ? 'Gut' : foto.zustand === 'mittel' ? 'Mittel' : 'Renovierungsbedürftig'}
+                </span>
+              </div>
+            )}
+
+            {/* Score (only if analysed) */}
+            {foto.score != null && (
+              <div>
+                <label className="block text-[12px] font-semibold text-text-secondary mb-1">Foto-Qualität</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-[#EEEEEE] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-accent rounded-full transition-all"
+                      style={{ width: `${foto.score * 10}%` }}
+                    />
+                  </div>
+                  <span className="text-[12px] font-semibold text-text-primary">{foto.score}/10</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Save button — pinned bottom */}
+          <div className="p-4 border-t border-[#EEEEEE]">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saveStatus === 'saving'}
+              className={`w-full inline-flex items-center justify-center gap-2 rounded-[8px] px-4 py-2.5 text-[13px] font-semibold transition-colors disabled:opacity-60 ${
+                saveStatus === 'saved'
+                  ? 'bg-[#E8F5EE] text-accent'
+                  : 'bg-accent hover:bg-accent-hover text-white'
+              }`}
+            >
+              {saveStatus === 'saved' ? (
+                <><Check size={14} /> Gespeichert</>
+              ) : saveStatus === 'saving' ? (
+                <><Loader2 size={14} className="animate-spin" /> Speichern...</>
+              ) : (
+                'Speichern'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

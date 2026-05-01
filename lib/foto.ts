@@ -5,6 +5,9 @@ export interface FotoItem {
   ki_konfidenz?: number | null
   raumtyp_manuell?: boolean
   analyse_status?: 'ausstehend' | 'analysiert' | 'fehler'
+  merkmale?: string[] | null
+  zustand?: string | null
+  score?: number | null
 }
 
 export const RAUMTYPEN = [
