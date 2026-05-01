@@ -51,8 +51,8 @@ async function runOverpassQuery(q: string): Promise<Array<{ lat: number; lon: nu
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
-        body: q,
-        headers: { 'Content-Type': 'text/plain' },
+        body: new URLSearchParams({ data: q }).toString(),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         signal: AbortSignal.timeout(12000),
       })
       if (!res.ok) {
