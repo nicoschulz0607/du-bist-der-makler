@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, AlertCircle } from 'lucide-react'
 import FotoUpload from '@/components/dashboard/FotoUpload'
+import { fetchInfrastruktur } from '@/lib/infra'
 
 const inputBase =
   'w-full rounded-[8px] border border-[#DDDDDD] px-4 min-h-[52px] text-[15px] font-medium text-text-primary bg-white outline-none transition-all duration-200 placeholder:text-text-tertiary focus:ring-2 focus:ring-accent focus:border-transparent'
@@ -83,14 +84,28 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
         const result = await save(formData)
         setSaveStatus('saved')
         router.refresh()
-        // Fire-and-forget: refresh geo+infra in background via dedicated route (maxDuration=30)
+        // Geocode address server-side (Nominatim), then fetch Overpass from browser (not rate-limited)
         const idToRefresh = result?.listingId ?? listing?.id
         if (idToRefresh) {
-          fetch('/api/refresh-geo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ listing_id: idToRefresh }),
-          }).catch(() => {})
+          ;(async () => {
+            try {
+              const geoRes = await fetch('/api/refresh-geo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ listing_id: idToRefresh }),
+              }).then(r => r.json())
+              if (geoRes?.ok && geoRes.lat && !geoRes.has_infra) {
+                const infra = await fetchInfrastruktur(geoRes.lat, geoRes.lon)
+                if (Object.keys(infra).length > 0) {
+                  await fetch('/api/save-infra', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ listing_id: idToRefresh, infra_json: infra }),
+                  })
+                }
+              }
+            } catch {}
+          })()
         }
       } catch {
         setSaveStatus('error')

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { geocodeAddress, fetchInfrastruktur } from '@/lib/infra'
+import { geocodeAddress } from '@/lib/infra'
 
-export const maxDuration = 45
+export const maxDuration = 15
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -26,25 +26,24 @@ export async function POST(req: NextRequest) {
   const newLat = parseFloat(coords.lat)
   const newLon = parseFloat(coords.lon)
 
-  // Skip Overpass if address hasn't moved (within ~100 m) and infra_json already has data
   const existingInfra = listing.infra_json as Record<string, unknown> | null
+  const hasInfra = !!existingInfra && Object.keys(existingInfra).length > 0
+
   const addressUnchanged =
     listing.lat != null &&
     listing.lon != null &&
     Math.abs(listing.lat - newLat) < 0.001 &&
     Math.abs(listing.lon - newLon) < 0.001
 
-  if (addressUnchanged && existingInfra && Object.keys(existingInfra).length > 0) {
-    return NextResponse.json({ ok: true, infra_keys: Object.keys(existingInfra).length, skipped: true })
+  if (addressUnchanged) {
+    return NextResponse.json({ ok: true, lat: newLat, lon: newLon, has_infra: hasInfra, skipped: true })
   }
 
-  const infra = await fetchInfrastruktur(newLat, newLon)
+  // Address changed or first geocode — save coordinates; infra will be fetched client-side
+  await supabase.from('listings')
+    .update({ lat: newLat, lon: newLon })
+    .eq('id', listing_id)
+    .eq('user_id', user.id)
 
-  await supabase.from('listings').update({
-    lat: newLat,
-    lon: newLon,
-    infra_json: infra,
-  }).eq('id', listing_id).eq('user_id', user.id)
-
-  return NextResponse.json({ ok: true, infra_keys: Object.keys(infra).length })
+  return NextResponse.json({ ok: true, lat: newLat, lon: newLon, has_infra: false })
 }
