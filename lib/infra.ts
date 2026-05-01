@@ -69,21 +69,21 @@ async function runOverpassQuery(q: string): Promise<Array<{ lat: number; lon: nu
 }
 
 export async function fetchInfrastruktur(lat: number, lon: number): Promise<InfraData> {
-  const q = `[out:json][timeout:12];
+  const q = `[out:json][timeout:15];
 (
-  node["amenity"="school"](around:2000,${lat},${lon});
-  node["amenity"="kindergarten"](around:2000,${lat},${lon});
-  node["shop"="supermarket"](around:2000,${lat},${lon});
-  node["shop"="convenience"](around:1000,${lat},${lon});
-  node["amenity"="doctors"](around:2000,${lat},${lon});
-  node["amenity"="hospital"](around:5000,${lat},${lon});
-  node["highway"="bus_stop"](around:600,${lat},${lon});
-  node["railway"="station"](around:3000,${lat},${lon});
-  node["leisure"="park"](around:2000,${lat},${lon});
-  node["highway"="motorway_junction"](around:12000,${lat},${lon});
-  node["place"~"^(town|city)$"](around:15000,${lat},${lon});
+  node["amenity"="school"](around:5000,${lat},${lon});
+  node["amenity"="kindergarten"](around:5000,${lat},${lon});
+  node["shop"="supermarket"](around:6000,${lat},${lon});
+  node["shop"="convenience"](around:3000,${lat},${lon});
+  node["amenity"="doctors"](around:6000,${lat},${lon});
+  node["amenity"="hospital"](around:10000,${lat},${lon});
+  node["highway"="bus_stop"](around:800,${lat},${lon});
+  node["railway"="station"](around:5000,${lat},${lon});
+  node["leisure"="park"](around:4000,${lat},${lon});
+  node["highway"="motorway_junction"](around:15000,${lat},${lon});
+  node["place"~"^(town|city)$"](around:20000,${lat},${lon});
 );
-out body 30;`
+out body 40;`
 
   try {
     const els = await runOverpassQuery(q)
