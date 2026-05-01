@@ -52,7 +52,7 @@ async function runOverpassQuery(q: string): Promise<Array<{ lat: number; lon: nu
         method: 'POST',
         body: new URLSearchParams({ data: q }).toString(),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(15000),
       })
       if (!res.ok) {
         console.error(`Overpass ${endpoint} returned ${res.status}`)
@@ -69,20 +69,21 @@ async function runOverpassQuery(q: string): Promise<Array<{ lat: number; lon: nu
 }
 
 export async function fetchInfrastruktur(lat: number, lon: number): Promise<InfraData> {
-  const q = `[out:json][timeout:20];
+  const q = `[out:json][timeout:12];
 (
-  node["amenity"~"school|kindergarten"](around:5000,${lat},${lon});
-  node["shop"~"supermarket|convenience|bakery"](around:8000,${lat},${lon});
-  node["amenity"~"doctors|hospital|clinic"](around:6000,${lat},${lon});
-  node["railway"~"station|halt|tram_stop"](around:6000,${lat},${lon});
-  node["highway"="bus_stop"](around:1500,${lat},${lon});
-  node["leisure"~"park|sports_centre|swimming_pool"](around:4000,${lat},${lon});
-  node["tourism"~"attraction|viewpoint"](around:5000,${lat},${lon});
-  node["natural"="waterfall"](around:8000,${lat},${lon});
-  node["highway"="motorway_junction"](around:30000,${lat},${lon});
-  node["place"~"town|city"](around:40000,${lat},${lon});
+  node["amenity"="school"](around:2000,${lat},${lon});
+  node["amenity"="kindergarten"](around:2000,${lat},${lon});
+  node["shop"="supermarket"](around:2000,${lat},${lon});
+  node["shop"="convenience"](around:1000,${lat},${lon});
+  node["amenity"="doctors"](around:2000,${lat},${lon});
+  node["amenity"="hospital"](around:5000,${lat},${lon});
+  node["highway"="bus_stop"](around:600,${lat},${lon});
+  node["railway"="station"](around:3000,${lat},${lon});
+  node["leisure"="park"](around:2000,${lat},${lon});
+  node["highway"="motorway_junction"](around:12000,${lat},${lon});
+  node["place"~"^(town|city)$"](around:15000,${lat},${lon});
 );
-out body 100;`
+out body 30;`
 
   try {
     const els = await runOverpassQuery(q)
