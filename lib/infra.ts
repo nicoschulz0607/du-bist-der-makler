@@ -41,9 +41,11 @@ export async function geocodeAddress(
 }
 
 const OVERPASS_ENDPOINTS = [
-  'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.nchc.org.tw/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+  'https://overpass-api.de/api/interpreter',
 ]
 
 async function runOverpassQuery(q: string): Promise<Array<{ lat: number; lon: number; tags: Record<string, string> }>> {

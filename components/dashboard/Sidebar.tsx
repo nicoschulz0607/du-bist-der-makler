@@ -108,7 +108,7 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
                 const locked = item.requiredTier ? !canAccess(tier, item.requiredTier) : false
                 const isActive = item.href === '/dashboard'
                   ? pathname === '/dashboard'
-                  : pathname.startsWith(item.href)
+                  : pathname === item.href || pathname.startsWith(item.href + '/')
 
                 return (
                   <li key={item.href}>
@@ -127,7 +127,7 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
                       </span>
                       <span className="flex-1 truncate">{item.label}</span>
                       {locked && <Lock size={12} className="text-text-tertiary flex-shrink-0" />}
-                      {!locked && item.badge && (
+                      {locked && item.badge && (
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                           item.badge === 'Premium'
                             ? 'bg-amber-100 text-amber-700'
