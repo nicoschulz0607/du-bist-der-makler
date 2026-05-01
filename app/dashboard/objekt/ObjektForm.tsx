@@ -48,7 +48,7 @@ interface ListingRow {
 interface ObjektFormProps {
   listing: ListingRow | null
   userId: string
-  save: (formData: FormData) => Promise<void>
+  save: (formData: FormData) => Promise<{ listingId: string | null }>
 }
 
 function SectionDivider({ title }: { title: string }) {
@@ -80,9 +80,18 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
     setSaveStatus('idle')
     startTransition(async () => {
       try {
-        await save(formData)
+        const result = await save(formData)
         setSaveStatus('saved')
         router.refresh()
+        // Fire-and-forget: refresh geo+infra in background via dedicated route (maxDuration=30)
+        const idToRefresh = result?.listingId ?? listing?.id
+        if (idToRefresh) {
+          fetch('/api/refresh-geo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ listing_id: idToRefresh }),
+          }).catch(() => {})
+        }
       } catch {
         setSaveStatus('error')
       }
