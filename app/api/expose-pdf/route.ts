@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const { data: listing } = await supabase
     .from('listings')
     .select(
-      'objekttyp, adresse_strasse, adresse_plz, adresse_ort, wohnflaeche_qm, zimmer, baujahr, zustand, preis, energieausweis_klasse, grundriss_url, fotos, expose_html, badezimmer, schlafzimmer, etage, nutzflaeche_qm, grundstueck_qm, renovierungsjahr, heizungsart, energieausweis_typ, energieverbrauch, energietraeger, ausstattung_items'
+      'objekttyp, adresse_strasse, adresse_plz, adresse_ort, wohnflaeche_qm, zimmer, baujahr, zustand, preis, energieausweis_klasse, grundriss_url, fotos, expose_html, badezimmer, schlafzimmer, etage, nutzflaeche_qm, grundstueck_qm, renovierungsjahr, heizungsart, energieausweis_typ, energieverbrauch, energietraeger, ausstattung_items, lat, lon, infra_json'
     )
     .eq('user_id', user.id)
     .limit(1)

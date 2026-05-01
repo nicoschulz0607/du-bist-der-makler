@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ObjektForm from './ObjektForm'
+import { geocodeAddress, fetchInfrastruktur } from '@/lib/infra'
 
 export const metadata = { title: 'Mein Objekt — Dashboard' }
 
@@ -47,10 +48,36 @@ async function speicherObjekt(formData: FormData) {
     ausstattung_items: (() => { try { return JSON.parse(formData.get('ausstattung_items') as string) } catch { return [] } })(),
   }
 
+  let savedId: string | null = listingId
+  let needsGeo = false
+
   if (listingId) {
+    const { data: existing } = await supabase
+      .from('listings')
+      .select('lat, adresse_strasse, adresse_plz, adresse_ort')
+      .eq('id', listingId).eq('user_id', user.id).single()
+    needsGeo = !existing?.lat ||
+      existing.adresse_strasse !== (payload.adresse_strasse ?? null) ||
+      existing.adresse_plz !== (payload.adresse_plz ?? null) ||
+      existing.adresse_ort !== (payload.adresse_ort ?? null)
     await supabase.from('listings').update(payload).eq('id', listingId).eq('user_id', user.id)
   } else {
-    await supabase.from('listings').insert({ ...payload, status: 'draft' })
+    const { data: inserted } = await supabase
+      .from('listings').insert({ ...payload, status: 'draft' }).select('id').single()
+    savedId = inserted?.id ?? null
+    needsGeo = true
+  }
+
+  if (needsGeo && savedId && (payload.adresse_strasse || payload.adresse_ort)) {
+    const coords = await geocodeAddress(payload.adresse_strasse, payload.adresse_plz, payload.adresse_ort)
+    if (coords) {
+      const infra = await fetchInfrastruktur(parseFloat(coords.lat), parseFloat(coords.lon))
+      await supabase.from('listings').update({
+        lat: parseFloat(coords.lat),
+        lon: parseFloat(coords.lon),
+        infra_json: infra,
+      }).eq('id', savedId).eq('user_id', user.id)
+    }
   }
 }
 

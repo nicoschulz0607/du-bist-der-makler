@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { type InfraData, geocodeAddress } from '@/lib/infra'
 
 interface FillTemplateOptions {
   listing: {
@@ -25,6 +26,9 @@ interface FillTemplateOptions {
     energieverbrauch?: number | null
     energietraeger?: string | null
     ausstattung_items?: string[] | null
+    lat?: number | null
+    lon?: number | null
+    infra_json?: InfraData | null
   }
   expose: {
     titel: string
@@ -71,26 +75,6 @@ function setAktiveEnergieKlasse(html: string, klasse: string | null): string {
   return result
 }
 
-async function geocodeAddress(
-  strasse: string | null,
-  plz: string | null,
-  ort: string | null
-): Promise<{ lat: string; lon: string } | null> {
-  const query = [strasse, plz, ort].filter(Boolean).join(', ')
-  if (!query) return null
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'du-bist-der-makler.de/1.0' },
-      signal: AbortSignal.timeout(5000),
-    })
-    const data = await res.json()
-    if (data[0]?.lat) return { lat: data[0].lat, lon: data[0].lon }
-  } catch {
-    // silently fall back to CSS placeholder
-  }
-  return null
-}
 
 function injectMapIframe(html: string, lat: string, lon: string): string {
   const delta = 0.008
@@ -180,11 +164,23 @@ export async function fillTemplate(options: FillTemplateOptions): Promise<string
   html = setAktiveEnergieKlasse(html, listing.energieausweis_klasse ?? null)
   html = injectEnergieFix(html)
 
-  // OSM map + client-side infra script
-  const coords = await geocodeAddress(listing.adresse_strasse, listing.adresse_plz, listing.adresse_ort)
-  if (coords) {
-    html = injectMapIframe(html, coords.lat, coords.lon)
-    html = injectInfraScript(html, coords.lat, coords.lon)
+  // Map: use cached coords from DB; fall back to live geocoding only if not yet stored
+  let mapLat = listing.lat != null ? listing.lat.toString() : null
+  let mapLon = listing.lon != null ? listing.lon.toString() : null
+  if (!mapLat || !mapLon) {
+    const coords = await geocodeAddress(listing.adresse_strasse, listing.adresse_plz, listing.adresse_ort)
+    if (coords) { mapLat = coords.lat; mapLon = coords.lon }
+  }
+  if (mapLat && mapLon) {
+    html = injectMapIframe(html, mapLat, mapLon)
+  }
+
+  // Infrastructure: use cached DB data; fall back to client-side script if not yet stored
+  const infra: InfraData = (listing.infra_json && Object.keys(listing.infra_json).length > 0)
+    ? listing.infra_json
+    : {}
+  if (Object.keys(infra).length === 0 && mapLat && mapLon) {
+    html = injectInfraScript(html, mapLat, mapLon)
   }
 
   const fotos = listing.fotos
@@ -292,7 +288,7 @@ export async function fillTemplate(options: FillTemplateOptions): Promise<string
     ['FREIZEIT_1', infra.freizeit1?.name ?? '—'], ['FREIZEIT_1_DIST', infra.freizeit1?.dist ?? ''],
     ['FREIZEIT_2', infra.freizeit2?.name ?? '—'], ['FREIZEIT_2_DIST', infra.freizeit2?.dist ?? ''],
     ['STADTZENTRUM', infra.stadtzentrum?.name ?? '—'], ['STADTZENTRUM_DIST', infra.stadtzentrum?.dist ?? ''],
-    ['GROSSSTADT', '—'], ['GROSSSTADT_DIST', ''],
+    ['GROSSSTADT', infra.stadtzentrum?.name ?? '—'], ['GROSSSTADT_DIST', ''],
     ['VERKAEUFER_NAME', userName ?? '—'],
     ['VERKAEUFER_EMAIL', userEmail ?? '—'],
     ['VERKAEUFER_TELEFON', '—'],
