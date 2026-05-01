@@ -40,8 +40,37 @@ export async function geocodeAddress(
   return null
 }
 
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+]
+
+async function runOverpassQuery(q: string): Promise<Array<{ lat: number; lon: number; tags: Record<string, string> }>> {
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        body: q,
+        headers: { 'Content-Type': 'text/plain' },
+        signal: AbortSignal.timeout(12000),
+      })
+      if (!res.ok) {
+        console.error(`Overpass ${endpoint} returned ${res.status}`)
+        continue
+      }
+      const data = await res.json()
+      if (Array.isArray(data.elements)) return data.elements
+      console.error(`Overpass ${endpoint} returned no elements array`, JSON.stringify(data).slice(0, 200))
+    } catch (err) {
+      console.error(`Overpass ${endpoint} failed:`, err)
+    }
+  }
+  return []
+}
+
 export async function fetchInfrastruktur(lat: number, lon: number): Promise<InfraData> {
-  const q = `[out:json][timeout:10];
+  const q = `[out:json][timeout:20];
 (
   node["amenity"~"school|kindergarten"](around:5000,${lat},${lon});
   node["shop"~"supermarket|convenience|bakery"](around:8000,${lat},${lon});
@@ -57,14 +86,7 @@ export async function fetchInfrastruktur(lat: number, lon: number): Promise<Infr
 out body 100;`
 
   try {
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: q,
-      headers: { 'Content-Type': 'text/plain' },
-      signal: AbortSignal.timeout(10000),
-    })
-    const data = await res.json()
-    const els: Array<{ lat: number; lon: number; tags: Record<string, string> }> = data.elements ?? []
+    const els = await runOverpassQuery(q)
 
     const pick = (
       filter: (e: { lat: number; lon: number; tags: Record<string, string> }) => boolean,

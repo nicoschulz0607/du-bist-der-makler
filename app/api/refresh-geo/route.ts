@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { geocodeAddress, fetchInfrastruktur } from '@/lib/infra'
 
-export const maxDuration = 30
+export const maxDuration = 45
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
