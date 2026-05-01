@@ -153,15 +153,17 @@ async function fetchInfrastruktur(lat: number, lon: number): Promise<InfraData> 
   const q = `[out:json][timeout:12];
 (
   node["amenity"~"school|kindergarten"](around:5000,${lat},${lon});
-  node["shop"~"supermarket|convenience"](around:3000,${lat},${lon});
+  node["shop"~"supermarket|convenience|bakery|grocery"](around:8000,${lat},${lon});
   node["amenity"~"doctors|hospital|clinic"](around:6000,${lat},${lon});
   node["railway"~"station|halt|tram_stop"](around:6000,${lat},${lon});
-  node["highway"="bus_stop"](around:1000,${lat},${lon});
+  node["highway"="bus_stop"](around:1500,${lat},${lon});
   node["leisure"~"park|sports_centre|swimming_pool"](around:4000,${lat},${lon});
+  node["tourism"~"attraction|viewpoint"](around:5000,${lat},${lon});
+  node["natural"="waterfall"](around:8000,${lat},${lon});
   node["highway"="motorway_junction"](around:30000,${lat},${lon});
   node["place"~"town|city"](around:40000,${lat},${lon});
 );
-out body 80;`
+out body 100;`
 
   try {
     const res = await fetch('https://overpass-api.de/api/interpreter', {
@@ -188,10 +190,14 @@ out body 80;`
         .map(e => ({ name: e.name, dist: fmtDist(e.distM) }))
 
     const schools = pick(e => /school|kindergarten/.test(e.tags.amenity ?? ''))
-    const shops = pick(e => /supermarket|convenience/.test(e.tags.shop ?? ''))
+    const shops = pick(e => /supermarket|convenience|bakery|grocery/.test(e.tags.shop ?? ''))
     const health = pick(e => /doctors|hospital|clinic/.test(e.tags.amenity ?? ''))
     const transit = pick(e => /station|halt|tram_stop/.test(e.tags.railway ?? '') || e.tags.highway === 'bus_stop')
-    const leisure = pick(e => /park|sports_centre|swimming_pool/.test(e.tags.leisure ?? ''))
+    const leisure = pick(e =>
+      /park|sports_centre|swimming_pool/.test(e.tags.leisure ?? '') ||
+      /attraction|viewpoint/.test(e.tags.tourism ?? '') ||
+      e.tags.natural === 'waterfall'
+    )
     const motorway = pick(e => e.tags.highway === 'motorway_junction', 1)
     const cities = pick(e => /town|city/.test(e.tags.place ?? ''), 2)
 
