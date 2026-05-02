@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Upload, X, Loader2, AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { Upload, X, Loader2, AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Check, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type FotoItem, RAUMTYPEN } from '@/lib/foto'
 
@@ -441,6 +441,7 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
   const [editBeschreibung, setEditBeschreibung] = useState<string>(foto.beschreibung ?? '')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [showRaumtypDropdown, setShowRaumtypDropdown] = useState(false)
+  const [generatingBeschreibung, setGeneratingBeschreibung] = useState(false)
 
   // Sync editable state when navigating
   useEffect(() => {
@@ -449,8 +450,28 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
     setEditBeschreibung(current.beschreibung ?? '')
     setSaveStatus('idle')
     setShowRaumtypDropdown(false)
+    setGeneratingBeschreibung(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex])
+
+  async function handleGenerateBeschreibung() {
+    if (!foto.url) return
+    setGeneratingBeschreibung(true)
+    try {
+      const res = await fetch('/api/generate-beschreibung', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: foto.url, raumtyp: editRaumtyp }),
+        signal: AbortSignal.timeout(15000),
+      })
+      const data = await res.json()
+      if (data.beschreibung) setEditBeschreibung(data.beschreibung)
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setGeneratingBeschreibung(false)
+    }
+  }
 
   // Keyboard navigation
   useEffect(() => {
@@ -555,7 +576,21 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
 
             {/* Beschreibung */}
             <div>
-              <label className="block text-[12px] font-semibold text-text-secondary mb-1">Beschreibung</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[12px] font-semibold text-text-secondary">Beschreibung</label>
+                <button
+                  type="button"
+                  onClick={handleGenerateBeschreibung}
+                  disabled={generatingBeschreibung}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent hover:text-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {generatingBeschreibung ? (
+                    <><Loader2 size={11} className="animate-spin" /> Generiert...</>
+                  ) : (
+                    <><Sparkles size={11} /> KI generieren</>
+                  )}
+                </button>
+              </div>
               <textarea
                 value={editBeschreibung}
                 onChange={e => setEditBeschreibung(e.target.value)}
