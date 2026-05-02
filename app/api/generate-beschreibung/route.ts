@@ -4,6 +4,8 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+export const maxDuration = 30
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -16,7 +18,8 @@ export async function POST(req: NextRequest) {
   const imgRes = await fetch(url)
   if (!imgRes.ok) return NextResponse.json({ error: 'Bild nicht abrufbar' }, { status: 400 })
 
-  const contentType = imgRes.headers.get('content-type') ?? 'image/jpeg'
+  const rawContentType = imgRes.headers.get('content-type') ?? 'image/jpeg'
+  const contentType = rawContentType.split(';')[0].trim()
   const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   const mediaType = validTypes.includes(contentType) ? contentType : 'image/jpeg'
 

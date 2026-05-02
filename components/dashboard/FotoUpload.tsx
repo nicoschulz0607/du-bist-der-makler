@@ -353,8 +353,8 @@ function FotoKachel({ foto, isTitelbild, isDropdownOpen, onDropdownToggle, onRau
           alt="Foto"
           loading="lazy"
           decoding="async"
-          onClick={foto.analyse_status === 'done' ? onOpen : undefined}
-          className={`w-full h-full object-cover rounded-[6px] ${foto.analyse_status === 'done' ? 'cursor-pointer' : ''} ${foto.analyse_status === 'analysing' ? 'ring-2 ring-accent' : ''}`}
+          onClick={foto.analyse_status === 'done' || foto.analyse_status === 'error' ? onOpen : undefined}
+          className={`w-full h-full object-cover rounded-[6px] ${foto.analyse_status === 'done' || foto.analyse_status === 'error' ? 'cursor-pointer' : ''} ${foto.analyse_status === 'analysing' ? 'ring-2 ring-accent' : ''}`}
         />
       ) : (
         <div className="w-full h-full rounded-[6px] bg-[#F0F0F0] flex flex-col items-center justify-center gap-1">
@@ -442,6 +442,7 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [showRaumtypDropdown, setShowRaumtypDropdown] = useState(false)
   const [generatingBeschreibung, setGeneratingBeschreibung] = useState(false)
+  const [generateError, setGenerateError] = useState(false)
 
   // Sync editable state when navigating
   useEffect(() => {
@@ -451,23 +452,29 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
     setSaveStatus('idle')
     setShowRaumtypDropdown(false)
     setGeneratingBeschreibung(false)
+    setGenerateError(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex])
 
   async function handleGenerateBeschreibung() {
     if (!foto.url) return
     setGeneratingBeschreibung(true)
+    setGenerateError(false)
     try {
       const res = await fetch('/api/generate-beschreibung', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: foto.url, raumtyp: editRaumtyp }),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(30000),
       })
       const data = await res.json()
-      if (data.beschreibung) setEditBeschreibung(data.beschreibung)
+      if (data.beschreibung) {
+        setEditBeschreibung(data.beschreibung)
+      } else {
+        setGenerateError(true)
+      }
     } catch {
-      // silently fail — user can retry
+      setGenerateError(true)
     } finally {
       setGeneratingBeschreibung(false)
     }
@@ -598,6 +605,9 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
                 className="w-full border border-[#DDDDDD] rounded-[8px] px-3 py-2 text-[13px] text-text-primary bg-white outline-none resize-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all placeholder:text-text-tertiary"
                 placeholder="Beschreibung dieses Fotos..."
               />
+              {generateError && (
+                <p className="text-[11px] text-red-500 mt-1">Generierung fehlgeschlagen — bitte erneut versuchen.</p>
+              )}
             </div>
 
             {/* Merkmale (only if analysed) */}
