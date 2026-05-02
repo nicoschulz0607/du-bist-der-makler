@@ -442,7 +442,7 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [showRaumtypDropdown, setShowRaumtypDropdown] = useState(false)
   const [generatingBeschreibung, setGeneratingBeschreibung] = useState(false)
-  const [generateError, setGenerateError] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
 
   // Sync editable state when navigating
   useEffect(() => {
@@ -452,14 +452,14 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
     setSaveStatus('idle')
     setShowRaumtypDropdown(false)
     setGeneratingBeschreibung(false)
-    setGenerateError(false)
+    setGenerateError(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex])
 
   async function handleGenerateBeschreibung() {
     if (!foto.url) return
     setGeneratingBeschreibung(true)
-    setGenerateError(false)
+    setGenerateError(null)
     try {
       const res = await fetch('/api/generate-beschreibung', {
         method: 'POST',
@@ -471,10 +471,10 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
       if (data.beschreibung) {
         setEditBeschreibung(data.beschreibung)
       } else {
-        setGenerateError(true)
+        setGenerateError(data.error ?? 'Unbekannter Fehler')
       }
-    } catch {
-      setGenerateError(true)
+    } catch (e) {
+      setGenerateError(String(e))
     } finally {
       setGeneratingBeschreibung(false)
     }
@@ -606,7 +606,7 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
                 placeholder="Beschreibung dieses Fotos..."
               />
               {generateError && (
-                <p className="text-[11px] text-red-500 mt-1">Generierung fehlgeschlagen — bitte erneut versuchen.</p>
+                <p className="text-[11px] text-red-500 mt-1 break-all">{generateError}</p>
               )}
             </div>
 

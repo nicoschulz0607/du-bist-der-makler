@@ -15,8 +15,13 @@ export async function POST(req: NextRequest) {
   if (!url) return NextResponse.json({ error: 'Keine URL' }, { status: 400 })
 
   // Fetch image from Supabase Storage URL and convert to base64
-  const imgRes = await fetch(url)
-  if (!imgRes.ok) return NextResponse.json({ error: 'Bild nicht abrufbar' }, { status: 400 })
+  let imgRes: Response
+  try {
+    imgRes = await fetch(url)
+  } catch (e) {
+    return NextResponse.json({ error: `Fetch fehlgeschlagen: ${String(e)}` }, { status: 400 })
+  }
+  if (!imgRes.ok) return NextResponse.json({ error: `Bild nicht abrufbar: HTTP ${imgRes.status} für ${url}` }, { status: 400 })
 
   const rawContentType = imgRes.headers.get('content-type') ?? 'image/jpeg'
   const contentType = rawContentType.split(';')[0].trim()
@@ -58,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     const text = response.content[0].type === 'text' ? response.content[0].text.trim() : ''
     return NextResponse.json({ beschreibung: text })
-  } catch {
-    return NextResponse.json({ error: 'Generierung fehlgeschlagen' }, { status: 500 })
+  } catch (e) {
+    return NextResponse.json({ error: `Anthropic-Fehler: ${String(e)}` }, { status: 500 })
   }
 }
