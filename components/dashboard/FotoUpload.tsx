@@ -99,6 +99,8 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const isUploading = fotoStates.some(f => f.analyse_status === 'uploading')
@@ -278,6 +280,43 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
     }
   }
 
+  function handleDragStart(index: number) {
+    setDragIndex(index)
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault()
+    if (dragIndex === null || dragIndex === index) return
+    setDragOverIndex(index)
+  }
+
+  function handleDrop(index: number) {
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null)
+      setDragOverIndex(null)
+      return
+    }
+    const supabase = createClient()
+    setFotoStates(prev => {
+      const next = [...prev]
+      const [moved] = next.splice(dragIndex, 1)
+      next.splice(index, 0, moved)
+      // Auto-save new order
+      if (listingId) {
+        const items = next.map(toFotoItem).filter((f): f is FotoItem => f !== null)
+        supabase.from('listings').update({ fotos: items }).eq('id', listingId).eq('user_id', userId).then(() => {})
+      }
+      return next
+    })
+    setDragIndex(null)
+    setDragOverIndex(null)
+  }
+
+  function handleDragEnd() {
+    setDragIndex(null)
+    setDragOverIndex(null)
+  }
+
   return (
     <div className="space-y-3">
       <div
@@ -333,10 +372,16 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
               foto={foto}
               isTitelbild={i === 0 && foto.url !== null}
               isDropdownOpen={openDropdownId === foto.id}
+              isDragging={dragIndex === i}
+              isDragOver={dragOverIndex === i}
               onDropdownToggle={() => setOpenDropdownId(prev => prev === foto.id ? null : foto.id)}
               onRaumtypChange={(rt) => handleRaumtypChange(foto.id, rt)}
               onDelete={() => handleDelete(foto.id)}
               onOpen={() => setLightboxId(foto.id)}
+              onDragStart={() => handleDragStart(i)}
+              onDragOver={(e) => handleDragOver(e, i)}
+              onDrop={() => handleDrop(i)}
+              onDragEnd={handleDragEnd}
             />
           ))}
         </div>
@@ -361,18 +406,32 @@ interface FotoKachelProps {
   foto: FotoState
   isTitelbild: boolean
   isDropdownOpen: boolean
+  isDragging: boolean
+  isDragOver: boolean
   onDropdownToggle: () => void
   onRaumtypChange: (raumtyp: string) => void
   onDelete: () => void
   onOpen: () => void
+  onDragStart: () => void
+  onDragOver: (e: React.DragEvent) => void
+  onDrop: () => void
+  onDragEnd: () => void
 }
 
-function FotoKachel({ foto, isTitelbild, isDropdownOpen, onDropdownToggle, onRaumtypChange, onDelete, onOpen }: FotoKachelProps) {
+function FotoKachel({ foto, isTitelbild, isDropdownOpen, isDragging, isDragOver, onDropdownToggle, onRaumtypChange, onDelete, onOpen, onDragStart, onDragOver, onDrop, onDragEnd }: FotoKachelProps) {
   const isUnsicher = foto.ki_konfidenz != null && foto.ki_konfidenz < 0.7 && !foto.raumtyp_manuell
   const showBadge = (foto.analyse_status === 'done' || foto.analyse_status === 'error') && foto.url
+  const isDraggable = !!foto.url && (foto.analyse_status === 'done' || foto.analyse_status === 'error')
 
   return (
-    <div className="relative aspect-square rounded-[6px] overflow-visible bg-surface group">
+    <div
+      className={`relative aspect-square rounded-[6px] overflow-visible bg-surface group transition-opacity duration-150 ${isDragging ? 'opacity-40' : 'opacity-100'} ${isDragOver ? 'ring-2 ring-accent ring-offset-1' : ''}`}
+      draggable={isDraggable}
+      onDragStart={isDraggable ? onDragStart : undefined}
+      onDragOver={isDraggable ? onDragOver : undefined}
+      onDrop={isDraggable ? onDrop : undefined}
+      onDragEnd={isDraggable ? onDragEnd : undefined}
+    >
       {foto.url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -381,7 +440,7 @@ function FotoKachel({ foto, isTitelbild, isDropdownOpen, onDropdownToggle, onRau
           loading="lazy"
           decoding="async"
           onClick={foto.analyse_status === 'done' || foto.analyse_status === 'error' ? onOpen : undefined}
-          className={`w-full h-full object-cover rounded-[6px] ${foto.analyse_status === 'done' || foto.analyse_status === 'error' ? 'cursor-pointer' : ''} ${foto.analyse_status === 'analysing' ? 'ring-2 ring-accent' : ''}`}
+          className={`w-full h-full object-cover rounded-[6px] ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''} ${foto.analyse_status === 'analysing' ? 'ring-2 ring-accent' : ''}`}
         />
       ) : (
         <div className="w-full h-full rounded-[6px] bg-[#F0F0F0] flex flex-col items-center justify-center gap-1">
