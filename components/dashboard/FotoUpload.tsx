@@ -25,6 +25,33 @@ interface FotoUploadProps {
   onChange: (fotos: FotoItem[]) => void
 }
 
+function resizeImageUrlToBase64(url: string): Promise<{ base64: string; mediaType: string }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const MAX = 1200
+      let w = img.naturalWidth
+      let h = img.naturalHeight
+      if (w > MAX || h > MAX) {
+        const ratio = Math.min(MAX / w, MAX / h)
+        w = Math.round(w * ratio)
+        h = Math.round(h * ratio)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { reject(new Error('canvas nicht verfügbar')); return }
+      ctx.drawImage(img, 0, 0, w, h)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+      resolve({ base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' })
+    }
+    img.onerror = () => reject(new Error('Bild konnte nicht geladen werden'))
+    img.src = url
+  })
+}
+
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -461,10 +488,11 @@ function FotoLightbox({ fotos, currentIndex, onClose, onNavigate, onSave }: Foto
     setGeneratingBeschreibung(true)
     setGenerateError(null)
     try {
+      const { base64, mediaType } = await resizeImageUrlToBase64(foto.url)
       const res = await fetch('/api/generate-beschreibung', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: foto.url, raumtyp: editRaumtyp }),
+        body: JSON.stringify({ imageBase64: base64, mediaType, raumtyp: editRaumtyp }),
         signal: AbortSignal.timeout(30000),
       })
       const data = await res.json()

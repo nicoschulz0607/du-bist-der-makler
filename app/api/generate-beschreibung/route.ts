@@ -4,32 +4,17 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-export const maxDuration = 30
+export const maxDuration = 20
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { url, raumtyp } = await req.json()
-  if (!url) return NextResponse.json({ error: 'Keine URL' }, { status: 400 })
-
-  // Fetch image from Supabase Storage URL and convert to base64
-  let imgRes: Response
-  try {
-    imgRes = await fetch(url)
-  } catch (e) {
-    return NextResponse.json({ error: `Fetch fehlgeschlagen: ${String(e)}` }, { status: 400 })
+  const { imageBase64, mediaType, raumtyp } = await req.json()
+  if (!imageBase64 || !mediaType) {
+    return NextResponse.json({ error: 'Kein Bild übergeben' }, { status: 400 })
   }
-  if (!imgRes.ok) return NextResponse.json({ error: `Bild nicht abrufbar: HTTP ${imgRes.status} für ${url}` }, { status: 400 })
-
-  const rawContentType = imgRes.headers.get('content-type') ?? 'image/jpeg'
-  const contentType = rawContentType.split(';')[0].trim()
-  const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-  const mediaType = validTypes.includes(contentType) ? contentType : 'image/jpeg'
-
-  const arrayBuffer = await imgRes.arrayBuffer()
-  const base64 = Buffer.from(arrayBuffer).toString('base64')
 
   const raumtypHinweis = raumtyp
     ? `Du weißt bereits, dass dieses Foto ein "${raumtyp}" zeigt.`
@@ -49,7 +34,7 @@ export async function POST(req: NextRequest) {
               source: {
                 type: 'base64',
                 media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
-                data: base64,
+                data: imageBase64,
               },
             },
             {
