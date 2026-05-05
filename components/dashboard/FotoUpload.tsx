@@ -370,6 +370,7 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
             <FotoKachel
               key={foto.id}
               foto={foto}
+              index={i}
               isTitelbild={i === 0 && foto.url !== null}
               isDropdownOpen={openDropdownId === foto.id}
               isDragging={dragIndex === i}
@@ -404,6 +405,7 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
 
 interface FotoKachelProps {
   foto: FotoState
+  index: number
   isTitelbild: boolean
   isDropdownOpen: boolean
   isDragging: boolean
@@ -418,7 +420,7 @@ interface FotoKachelProps {
   onDragEnd: () => void
 }
 
-function FotoKachel({ foto, isTitelbild, isDropdownOpen, isDragging, isDragOver, onDropdownToggle, onRaumtypChange, onDelete, onOpen, onDragStart, onDragOver, onDrop, onDragEnd }: FotoKachelProps) {
+function FotoKachel({ foto, index, isTitelbild, isDropdownOpen, isDragging, isDragOver, onDropdownToggle, onRaumtypChange, onDelete, onOpen, onDragStart, onDragOver, onDrop, onDragEnd }: FotoKachelProps) {
   const isUnsicher = foto.ki_konfidenz != null && foto.ki_konfidenz < 0.7 && !foto.raumtyp_manuell
   const showBadge = (foto.analyse_status === 'done' || foto.analyse_status === 'error') && foto.url
   const isDraggable = !!foto.url && (foto.analyse_status === 'done' || foto.analyse_status === 'error')
@@ -437,7 +439,8 @@ function FotoKachel({ foto, isTitelbild, isDropdownOpen, isDragging, isDragOver,
         <img
           src={foto.url}
           alt="Foto"
-          loading="lazy"
+          loading={index < 6 ? 'eager' : 'lazy'}
+          fetchPriority={index < 6 ? 'high' : 'auto'}
           decoding="async"
           onClick={foto.analyse_status === 'done' || foto.analyse_status === 'error' ? onOpen : undefined}
           className={`w-full h-full object-cover rounded-[6px] ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''} ${foto.analyse_status === 'analysing' ? 'ring-2 ring-accent' : ''}`}

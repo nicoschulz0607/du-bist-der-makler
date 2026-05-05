@@ -14,13 +14,11 @@ async function createTermin(formData: FormData): Promise<{ ok: boolean; error?: 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'Nicht eingeloggt' }
 
-  const { data: listing } = await supabase
-    .from('listings')
-    .select('id, adresse_strasse, adresse_plz, adresse_ort, objekttyp')
-    .eq('user_id', user.id).limit(1).maybeSingle()
+  const [{ data: listing }, { data: profile }] = await Promise.all([
+    supabase.from('listings').select('id, adresse_strasse, adresse_plz, adresse_ort, objekttyp').eq('user_id', user.id).limit(1).maybeSingle(),
+    supabase.from('profiles').select('vorname, email').eq('id', user.id).single(),
+  ])
   if (!listing) return { ok: false, error: 'Kein Objekt gefunden.' }
-
-  const { data: profile } = await supabase.from('profiles').select('vorname, email').eq('id', user.id).single()
 
   const datum = formData.get('datum') as string
   const uhrzeit_von = formData.get('uhrzeit_von') as string
@@ -71,28 +69,29 @@ async function createTermin(formData: FormData): Promise<{ ok: boolean; error?: 
       const dateStr = dtstart.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })
       const timeStr = uhrzeit_von.slice(0, 5)
 
-      for (const inv of invitees ?? []) {
-        if (!inv.email) continue
-        const ical = buildIcal({
-          uid: termin.ical_uid,
-          sequence: termin.ical_sequence,
-          method: 'REQUEST',
-          dtstart,
-          dtend,
-          summary: `Besichtigung: ${adresse}`,
-          description: `Besichtigungstermin für ${listing.objekttyp ?? 'Immobilie'} in ${adresse}.\n\nBitte Personalausweis mitbringen.\n\nRückfragen: ${profile?.vorname ?? ''} — ${profile?.email ?? ''}`,
-          location: adresse,
-          organizerName: profile?.vorname ?? 'Verkäufer',
-          organizerEmail: profile?.email ?? user.email ?? '',
-          attendeeName: inv.name,
-          attendeeEmail: inv.email,
-        })
-
-        await resend.emails.send({
-          from: FROM_EMAIL,
-          to: inv.email,
-          subject: `Besichtigungstermin: ${adresse} am ${dateStr} um ${timeStr} Uhr`,
-          html: `<p>Hallo ${inv.name},</p>
+      await Promise.allSettled(
+        (invitees ?? [])
+          .filter(inv => inv.email)
+          .map(inv => {
+            const ical = buildIcal({
+              uid: termin.ical_uid,
+              sequence: termin.ical_sequence,
+              method: 'REQUEST',
+              dtstart,
+              dtend,
+              summary: `Besichtigung: ${adresse}`,
+              description: `Besichtigungstermin für ${listing.objekttyp ?? 'Immobilie'} in ${adresse}.\n\nBitte Personalausweis mitbringen.\n\nRückfragen: ${profile?.vorname ?? ''} — ${profile?.email ?? ''}`,
+              location: adresse,
+              organizerName: profile?.vorname ?? 'Verkäufer',
+              organizerEmail: profile?.email ?? user.email ?? '',
+              attendeeName: inv.name,
+              attendeeEmail: inv.email!,
+            })
+            return resend.emails.send({
+              from: FROM_EMAIL,
+              to: inv.email!,
+              subject: `Besichtigungstermin: ${adresse} am ${dateStr} um ${timeStr} Uhr`,
+              html: `<p>Hallo ${inv.name},</p>
 <p>dein Besichtigungstermin für <strong>${adresse}</strong> wurde bestätigt:</p>
 <p><strong>Datum:</strong> ${dateStr}<br>
 <strong>Uhrzeit:</strong> ${timeStr} Uhr<br>
@@ -102,9 +101,10 @@ async function createTermin(formData: FormData): Promise<{ ok: boolean; error?: 
 ${profile?.vorname ?? 'Verkäufer'} · ${profile?.email ?? ''}</p>
 <p>Bitte sei pünktlich, damit alle Interessenten ausreichend Zeit für die Besichtigung haben.</p>
 <p><em>Diese Einladung enthält einen Kalender-Anhang (.ics), den du direkt in deinen Kalender importieren kannst.</em></p>`,
-          attachments: [{ filename: 'besichtigung.ics', content: Buffer.from(ical).toString('base64') }],
-        }).catch(() => {})
-      }
+              attachments: [{ filename: 'besichtigung.ics', content: Buffer.from(ical).toString('base64') }],
+            }).catch(() => {})
+          })
+      )
     }
   }
 
@@ -133,15 +133,11 @@ async function updateTermin(terminId: string, formData: FormData): Promise<{ ok:
 
   // Resend emails if date/time changed and people were invited
   if (dateChanged) {
-    const { data: listing } = await supabase.from('listings')
-      .select('adresse_strasse, adresse_plz, adresse_ort, objekttyp').eq('id', existing.listing_id).single()
-    const { data: profile } = await supabase.from('profiles').select('vorname, email').eq('id', user.id).single()
-
-    const { data: invitees } = await supabase
-      .from('termine_interessenten')
-      .select('interessenten(id, name, email)')
-      .eq('termin_id', terminId)
-      .eq('eingeladen_per_mail', true)
+    const [{ data: listing }, { data: profile }, { data: invitees }] = await Promise.all([
+      supabase.from('listings').select('adresse_strasse, adresse_plz, adresse_ort, objekttyp').eq('id', existing.listing_id).single(),
+      supabase.from('profiles').select('vorname, email').eq('id', user.id).single(),
+      supabase.from('termine_interessenten').select('interessenten(id, name, email)').eq('termin_id', terminId).eq('eingeladen_per_mail', true),
+    ])
 
     const adresse = listing ? [listing.adresse_strasse, listing.adresse_plz, listing.adresse_ort].filter(Boolean).join(', ') : ''
     const dtstart = buildAppointmentDatetime(datum, uhrzeit_von)
@@ -149,30 +145,33 @@ async function updateTermin(terminId: string, formData: FormData): Promise<{ ok:
     const dateStr = dtstart.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })
     const timeStr = uhrzeit_von.slice(0, 5)
 
-    for (const link of invitees ?? []) {
-      const inv = (link as any).interessenten
-      if (!inv?.email) continue
-      const ical = buildIcal({
-        uid: existing.ical_uid,
-        sequence: newSequence,
-        method: 'REQUEST',
-        dtstart, dtend,
-        summary: `Besichtigung: ${adresse}`,
-        description: `Aktualisierter Termin für ${listing?.objekttyp ?? 'Immobilie'} in ${adresse}.`,
-        location: adresse,
-        organizerName: profile?.vorname ?? 'Verkäufer',
-        organizerEmail: profile?.email ?? user.email ?? '',
-        attendeeName: inv.name,
-        attendeeEmail: inv.email,
-      })
-      await resend.emails.send({
-        from: FROM_EMAIL,
-        to: inv.email,
-        subject: `Termin-Update: Besichtigung ${adresse} am ${dateStr} um ${timeStr} Uhr`,
-        html: `<p>Hallo ${inv.name},</p><p>dein Besichtigungstermin wurde aktualisiert:</p><p><strong>Neues Datum:</strong> ${dateStr}<br><strong>Uhrzeit:</strong> ${timeStr} Uhr</p>`,
-        attachments: [{ filename: 'besichtigung.ics', content: Buffer.from(ical).toString('base64') }],
-      }).catch(() => {})
-    }
+    await Promise.allSettled(
+      (invitees ?? [])
+        .map(link => (link as any).interessenten)
+        .filter((inv: any) => inv?.email)
+        .map((inv: any) => {
+          const ical = buildIcal({
+            uid: existing.ical_uid,
+            sequence: newSequence,
+            method: 'REQUEST',
+            dtstart, dtend,
+            summary: `Besichtigung: ${adresse}`,
+            description: `Aktualisierter Termin für ${listing?.objekttyp ?? 'Immobilie'} in ${adresse}.`,
+            location: adresse,
+            organizerName: profile?.vorname ?? 'Verkäufer',
+            organizerEmail: profile?.email ?? user.email ?? '',
+            attendeeName: inv.name,
+            attendeeEmail: inv.email,
+          })
+          return resend.emails.send({
+            from: FROM_EMAIL,
+            to: inv.email,
+            subject: `Termin-Update: Besichtigung ${adresse} am ${dateStr} um ${timeStr} Uhr`,
+            html: `<p>Hallo ${inv.name},</p><p>dein Besichtigungstermin wurde aktualisiert:</p><p><strong>Neues Datum:</strong> ${dateStr}<br><strong>Uhrzeit:</strong> ${timeStr} Uhr</p>`,
+            attachments: [{ filename: 'besichtigung.ics', content: Buffer.from(ical).toString('base64') }],
+          }).catch(() => {})
+        })
+    )
   }
 
   return { ok: true }
@@ -191,39 +190,39 @@ async function cancelTermin(terminId: string): Promise<{ ok: boolean }> {
   const newSeq = existing.ical_sequence + 1
   await supabase.from('termine').update({ status: 'abgesagt', ical_sequence: newSeq }).eq('id', terminId)
 
-  const { data: listing } = await supabase.from('listings')
-    .select('adresse_strasse, adresse_plz, adresse_ort, objekttyp').eq('id', existing.listing_id).single()
-  const { data: profile } = await supabase.from('profiles').select('vorname, email').eq('id', user.id).single()
-  const { data: invitees } = await supabase
-    .from('termine_interessenten')
-    .select('interessenten(id, name, email)')
-    .eq('termin_id', terminId)
-    .eq('eingeladen_per_mail', true)
+  const [{ data: listing }, { data: profile }, { data: invitees }] = await Promise.all([
+    supabase.from('listings').select('adresse_strasse, adresse_plz, adresse_ort, objekttyp').eq('id', existing.listing_id).single(),
+    supabase.from('profiles').select('vorname, email').eq('id', user.id).single(),
+    supabase.from('termine_interessenten').select('interessenten(id, name, email)').eq('termin_id', terminId).eq('eingeladen_per_mail', true),
+  ])
 
   const adresse = listing ? [listing.adresse_strasse, listing.adresse_plz, listing.adresse_ort].filter(Boolean).join(', ') : ''
   const dtstart = buildAppointmentDatetime(existing.datum, existing.uhrzeit_von)
   const dtend = buildAppointmentDatetime(existing.datum, existing.uhrzeit_bis)
 
-  for (const link of invitees ?? []) {
-    const inv = (link as any).interessenten
-    if (!inv?.email) continue
-    const ical = buildIcal({
-      uid: existing.ical_uid, sequence: newSeq, method: 'CANCEL',
-      dtstart, dtend, summary: `Abgesagt: Besichtigung ${adresse}`,
-      description: 'Dieser Termin wurde abgesagt.',
-      location: adresse,
-      organizerName: profile?.vorname ?? 'Verkäufer',
-      organizerEmail: profile?.email ?? user.email ?? '',
-      attendeeName: inv.name, attendeeEmail: inv.email,
-    })
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to: inv.email,
-      subject: `Abgesagt: Besichtigung ${adresse}`,
-      html: `<p>Hallo ${inv.name},</p><p>der Besichtigungstermin für <strong>${adresse}</strong> wurde leider abgesagt.</p>`,
-      attachments: [{ filename: 'absage.ics', content: Buffer.from(ical).toString('base64') }],
-    }).catch(() => {})
-  }
+  await Promise.allSettled(
+    (invitees ?? [])
+      .map(link => (link as any).interessenten)
+      .filter((inv: any) => inv?.email)
+      .map((inv: any) => {
+        const ical = buildIcal({
+          uid: existing.ical_uid, sequence: newSeq, method: 'CANCEL',
+          dtstart, dtend, summary: `Abgesagt: Besichtigung ${adresse}`,
+          description: 'Dieser Termin wurde abgesagt.',
+          location: adresse,
+          organizerName: profile?.vorname ?? 'Verkäufer',
+          organizerEmail: profile?.email ?? user.email ?? '',
+          attendeeName: inv.name, attendeeEmail: inv.email,
+        })
+        return resend.emails.send({
+          from: FROM_EMAIL,
+          to: inv.email,
+          subject: `Abgesagt: Besichtigung ${adresse}`,
+          html: `<p>Hallo ${inv.name},</p><p>der Besichtigungstermin für <strong>${adresse}</strong> wurde leider abgesagt.</p>`,
+          attachments: [{ filename: 'absage.ics', content: Buffer.from(ical).toString('base64') }],
+        }).catch(() => {})
+      })
+  )
 
   return { ok: true }
 }
@@ -233,7 +232,10 @@ export default async function TerminePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('paket_tier').eq('id', user.id).single()
+  const [{ data: profile }, { data: listing }] = await Promise.all([
+    supabase.from('profiles').select('paket_tier').eq('id', user.id).single(),
+    supabase.from('listings').select('id, adresse_strasse, adresse_plz, adresse_ort').eq('user_id', user.id).limit(1).maybeSingle(),
+  ])
   const tier = (profile?.paket_tier ?? null) as Tier
 
   if (!canAccess(tier, 'pro')) {
@@ -252,27 +254,23 @@ export default async function TerminePage() {
     )
   }
 
-  const { data: listing } = await supabase
-    .from('listings').select('id, adresse_strasse, adresse_plz, adresse_ort').eq('user_id', user.id).limit(1).maybeSingle()
-
-  const { data: termine } = listing
-    ? await supabase
-        .from('termine')
-        .select(`id, datum, uhrzeit_von, uhrzeit_bis, notiz, status, ical_uid, ical_sequence,
-          termine_interessenten(interessent_id, eingeladen_per_mail, interessenten(id, name, email))`)
-        .eq('listing_id', listing.id)
-        .order('datum', { ascending: true })
-        .order('uhrzeit_von', { ascending: true })
-    : { data: [] }
-
-  const { data: interessenten } = listing
-    ? await supabase
-        .from('interessenten')
-        .select('id, name, email')
-        .eq('listing_id', listing.id)
-        .neq('status', 'abgesagt')
-        .order('name')
-    : { data: [] }
+  const [{ data: termine }, { data: interessenten }] = listing
+    ? await Promise.all([
+        supabase
+          .from('termine')
+          .select(`id, datum, uhrzeit_von, uhrzeit_bis, notiz, status, ical_uid, ical_sequence,
+            termine_interessenten(interessent_id, eingeladen_per_mail, interessenten(id, name, email))`)
+          .eq('listing_id', listing.id)
+          .order('datum', { ascending: true })
+          .order('uhrzeit_von', { ascending: true }),
+        supabase
+          .from('interessenten')
+          .select('id, name, email')
+          .eq('listing_id', listing.id)
+          .neq('status', 'abgesagt')
+          .order('name'),
+      ])
+    : [{ data: [] }, { data: [] }]
 
   const onUpdate = updateTermin.bind(null)
   const onCancel = cancelTermin.bind(null)

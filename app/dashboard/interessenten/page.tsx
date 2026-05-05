@@ -47,8 +47,10 @@ export default async function InteressentenPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles').select('paket_tier').eq('id', user.id).single()
+  const [{ data: profile }, { data: listing }] = await Promise.all([
+    supabase.from('profiles').select('paket_tier').eq('id', user.id).single(),
+    supabase.from('listings').select('id').eq('user_id', user.id).limit(1).maybeSingle(),
+  ])
 
   const tier = (profile?.paket_tier ?? null) as Tier
 
@@ -67,9 +69,6 @@ export default async function InteressentenPage() {
       />
     )
   }
-
-  const { data: listing } = await supabase
-    .from('listings').select('id').eq('user_id', user.id).limit(1).maybeSingle()
 
   const { data: interessenten } = listing
     ? await supabase

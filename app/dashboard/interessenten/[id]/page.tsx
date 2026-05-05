@@ -56,25 +56,20 @@ export default async function InteressentPage({ params }: { params: Promise<{ id
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles').select('paket_tier').eq('id', user.id).single()
+  const [{ data: profile }, { data: int }, { data: terminLinks }] = await Promise.all([
+    supabase.from('profiles').select('paket_tier').eq('id', user.id).single(),
+    supabase.from('interessenten').select('*').eq('id', id).single(),
+    supabase
+      .from('termine_interessenten')
+      .select('termin_id, eingeladen_per_mail, zugesagt, erschienen, termine(id, datum, uhrzeit_von, uhrzeit_bis, status, notiz)')
+      .eq('interessent_id', id)
+      .order('created_at', { ascending: false }),
+  ])
+
   const tier = (profile?.paket_tier ?? null) as Tier
   if (!canAccess(tier, 'pro')) redirect('/dashboard/interessenten')
 
-  const { data: int } = await supabase
-    .from('interessenten')
-    .select('*')
-    .eq('id', id)
-    .single()
-
   if (!int) notFound()
-
-  // Load termine for this interessent
-  const { data: terminLinks } = await supabase
-    .from('termine_interessenten')
-    .select('termin_id, eingeladen_per_mail, zugesagt, erschienen, termine(id, datum, uhrzeit_von, uhrzeit_bis, status, notiz)')
-    .eq('interessent_id', id)
-    .order('created_at', { ascending: false })
 
   const termine = (terminLinks ?? []).map((tl: any) => ({
     ...tl.termine,
