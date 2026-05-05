@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ChevronDown, ChevronRight, Lock, ExternalLink, Zap } from 'lucide-react'
 import { canAccess, type Tier } from '@/lib/tier'
 import { type ChecklistPhase } from '@/lib/checklist'
+import InlineButton from '@/components/klara/InlineButton'
 
 // Items die systemseitig automatisch abgehakt werden
 const AUTO_CHECK_IDS = new Set(['konto_erstellt', 'objekt_erfasst', 'preis_ermittelt', 'inserat_live'])
@@ -118,15 +119,21 @@ export default function ChecklistClient({ checklist, completedIds, tier, toggleI
                         <p className="text-[12px] text-text-secondary mt-0.5 leading-relaxed">
                           {item.description}
                         </p>
-                        {item.actionLabel && item.actionHref && !isCompleted && (
-                          <Link
-                            href={item.actionHref}
-                            className="inline-flex items-center gap-1 mt-2 text-[12px] font-semibold text-accent hover:underline"
-                          >
-                            {item.actionLabel}
-                            <ExternalLink size={11} />
-                          </Link>
-                        )}
+                        <div className="flex items-center gap-3 mt-1.5">
+                          {item.actionLabel && item.actionHref && !isCompleted && (
+                            <Link
+                              href={item.actionHref}
+                              className="inline-flex items-center gap-1 text-[12px] font-semibold text-accent hover:underline"
+                            >
+                              {item.actionLabel}
+                              <ExternalLink size={11} />
+                            </Link>
+                          )}
+                          <InlineButton
+                            compact
+                            prefilledQuestion={`Wie erledige ich die Aufgabe: „${item.title}"? ${item.description}`}
+                          />
+                        </div>
                       </div>
                     </li>
                   )

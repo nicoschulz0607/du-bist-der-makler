@@ -3,6 +3,22 @@ import path from 'path'
 import { type InfraData, geocodeAddress } from '@/lib/infra'
 import { normalizeFotos } from '@/lib/foto'
 
+type ExposeJson = {
+  titel: string
+  tagline: string
+  beschreibung_kurz: string
+  beschreibung_lang: string
+  ausstattung_text: string
+  lage_text: string
+  highlights: string[]
+}
+
+// Merge AI-generated expose with manual edits — edits win, survive re-generation
+export function mergeExpose(ai: ExposeJson, edits: Partial<ExposeJson> | null | undefined): ExposeJson {
+  if (!edits) return ai
+  return { ...ai, ...edits }
+}
+
 interface FillTemplateOptions {
   listing: {
     id?: string | null
@@ -28,21 +44,27 @@ interface FillTemplateOptions {
     energieverbrauch?: number | null
     energietraeger?: string | null
     ausstattung_items?: string[] | null
+    fussbodenart?: string[] | null
+    verfuegbar_ab?: string | null
+    anzahl_garagen?: number | null
+    anzahl_carports?: number | null
+    anzahl_stellplaetze?: number | null
     lat?: number | null
     lon?: number | null
     infra_json?: InfraData | null
+    standort_anzeige?: string | null
   }
-  expose: {
-    titel: string
-    tagline: string
-    beschreibung_kurz: string
-    beschreibung_lang: string
-    ausstattung_text: string
-    lage_text: string
-    highlights: string[]
-  }
+  expose: ExposeJson
   userName?: string
   userEmail?: string
+}
+
+function formatStellplaetze(listing: { anzahl_garagen?: number | null; anzahl_carports?: number | null; anzahl_stellplaetze?: number | null }): string {
+  const parts: string[] = []
+  if (listing.anzahl_garagen) parts.push(`${listing.anzahl_garagen} Garage${listing.anzahl_garagen > 1 ? 'n' : ''}`)
+  if (listing.anzahl_carports) parts.push(`${listing.anzahl_carports} Carport${listing.anzahl_carports > 1 ? 's' : ''}`)
+  if (listing.anzahl_stellplaetze) parts.push(`${listing.anzahl_stellplaetze} Stellplatz/-plätze`)
+  return parts.length > 0 ? parts.join(', ') : '—'
 }
 
 function cyclePhoto(fotos: string[], index: number): string {
@@ -86,20 +108,47 @@ function setAktiveEnergieKlasse(html: string, klasse: string | null): string {
 }
 
 
-function injectMapIframe(html: string, lat: string, lon: string): string {
-  const delta = 0.008
+function injectMapIframe(html: string, lat: string, lon: string, precise = true): string {
+  // 'precise' false → zoom out to city level, no location pin
+  const zoom = precise ? 15 : 12
   const latF = parseFloat(lat)
   const lonF = parseFloat(lon)
-  const bbox = `${(lonF - delta).toFixed(5)},${(latF - delta).toFixed(5)},${(lonF + delta).toFixed(5)},${(latF + delta).toFixed(5)}`
-  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`
-  // -70px top: hides both Leaflet zoom buttons (+/-)
-  // +140px height: 70px extra at top + 70px at bottom hides the attribution bar
-  // pointer-events:none + scrolling=no: no scrollbars, no interaction
-  const wrapper = `<div style="position:relative;overflow:hidden;height:60mm;border:0.3mm solid #cccccc;border-radius:2mm;">` +
-    `<iframe src="${src}" scrolling="no" style="position:absolute;top:-70px;left:-1px;width:calc(100% + 2px);height:calc(100% + 140px);border:0;pointer-events:none;" loading="lazy" title="Standort"></iframe>` +
+
+  // Calculate OSM tile coordinates
+  const n = Math.pow(2, zoom)
+  const tileX = Math.floor((lonF + 180) / 360 * n)
+  const latRad = latF * Math.PI / 180
+  const yFloat = (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n
+  const tileY = Math.floor(yFloat)
+
+  // Property's pixel offset from center of the center tile (256px tiles)
+  const propFromCenterX = Math.round(((lonF + 180) / 360 * n - tileX - 0.5) * 256)
+  const propFromCenterY = Math.round((yFloat - tileY - 0.5) * 256)
+
+  // 3×3 grid of tiles; property is at grid position (384+offset) from grid origin
+  const gridCenterX = 384 + propFromCenterX
+  const gridCenterY = 384 + propFromCenterY
+
+  const tileImgs = [-1, 0, 1].flatMap(dy =>
+    [-1, 0, 1].map(dx =>
+      `<img src="https://tile.openstreetmap.org/${zoom}/${tileX + dx}/${tileY + dy}.png" ` +
+      `style="position:absolute;left:${(dx + 1) * 256}px;top:${(dy + 1) * 256}px;width:256px;height:256px;" alt="">`
+    )
+  ).join('')
+
+  const pin = precise
+    ? `<div style="position:absolute;width:10px;height:10px;background:#1B6B45;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);left:calc(50% - 5px);top:calc(50% - 5px);z-index:2;"></div>`
+    : ''
+
+  const wrapper =
+    `<div style="position:relative;overflow:hidden;height:60mm;border:0.3mm solid #cccccc;border-radius:2mm;background:#e8f0e8;">` +
+    `<div style="position:absolute;width:768px;height:768px;left:calc(50% - ${gridCenterX}px);top:calc(50% - ${gridCenterY}px);">${tileImgs}</div>` +
+    pin +
+    `<div style="position:absolute;bottom:1mm;right:2mm;font-size:5pt;color:#555;background:rgba(255,255,255,0.7);padding:0.5mm 1mm;border-radius:1mm;">© OpenStreetMap</div>` +
     `</div>`
+
   return html.replace(
-    /<div class="map-placeholder">[\s\S]*?<\/div>/,
+    /<div class="map-placeholder">[\s\S]*?<\/div>\s*<\/div>/,
     wrapper
   )
 }
@@ -121,6 +170,7 @@ html, body { overflow-x: hidden; }
 [contenteditable="true"]:focus { outline:1.5px solid #22c55e !important;background:rgba(34,197,94,0.08); }
 @media print {
   #expose-print-bar { display:none !important; }
+  #expose-screen-spacer { display:none !important; }
   [contenteditable="true"] { outline:none !important;background:transparent !important; }
 }
 </style>`
@@ -166,18 +216,37 @@ function injectPrintBar(html: string, listingId: string): string {
     <button id="expose-save-btn" onclick="exposeEditSave()" style="background:#374151;color:#fff;border:1px solid #4b5563;border-radius:6px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;">
       Änderungen speichern
     </button>
-    <button onclick="window.print()" style="background:#22c55e;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;">
+    <button id="expose-dl-btn" onclick="exposePdfDownload()" style="background:#22c55e;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;">
       Als PDF herunterladen
     </button>
   </div>
 </div>
 <div id="ef-listing-id" data-id="${listingId}" style="display:none;"></div>
-<div style="height:44px;"></div>`
+<div id="expose-screen-spacer" style="height:44px;"></div>`
   return html.replace('<body>', '<body>' + bar)
 }
 
 function injectSaveScript(html: string): string {
   const js = `<script>
+function exposePdfDownload(){
+  var btn=document.getElementById('expose-dl-btn');
+  if(btn){btn.disabled=true;btn.textContent='Wird erstellt…';}
+  fetch('/api/expose-pdf')
+    .then(function(r){
+      if(!r.ok)throw new Error('Fehler '+r.status);
+      return r.blob();
+    })
+    .then(function(blob){
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url;a.download='expose.pdf';a.click();
+      URL.revokeObjectURL(url);
+    })
+    .catch(function(e){alert('PDF-Fehler: '+e.message);})
+    .finally(function(){
+      if(btn){btn.disabled=false;btn.textContent='Als PDF herunterladen';}
+    });
+}
 function exposeEditSave(){
   var g=function(id){var el=document.getElementById('ef-'+id);return el?el.innerText.trim()||null:null};
   var lid=document.getElementById('ef-listing-id');
@@ -234,7 +303,7 @@ export async function fillTemplate(options: FillTemplateOptions): Promise<string
     if (coords) { mapLat = coords.lat; mapLon = coords.lon }
   }
   if (mapLat && mapLon) {
-    html = injectMapIframe(html, mapLat, mapLon)
+    html = injectMapIframe(html, mapLat, mapLon, listing.standort_anzeige !== 'ort')
   }
 
   // Infrastructure: use cached DB data; fall back to client-side script if not yet stored
@@ -270,14 +339,23 @@ export async function fillTemplate(options: FillTemplateOptions): Promise<string
   const v = (val: string | number | null | undefined, suffix = ''): string =>
     val != null && val !== '' ? `${val}${suffix}` : '—'
 
+  const ort = listing.standort_anzeige === 'ort'
+  const strasseDisplay = ort ? '' : (listing.adresse_strasse ?? '—')
+  const adresseZeile = ort
+    ? `${listing.adresse_plz ?? ''} ${listing.adresse_ort ?? ''}`.trim() || '—'
+    : [`${listing.adresse_strasse ?? ''}`, `${listing.adresse_plz ?? ''} ${listing.adresse_ort ?? ''}`.trim()]
+        .filter(Boolean).join(', ') || '—'
+
   const replacements: Array<[string, string]> = [
+    ['TITEL_TEXT', expose.titel],
     ['TITEL', ed('TITEL', expose.titel)],
     ['TAGLINE', edi('TAGLINE', expose.tagline)],
     ['TITEL_KURZ', expose.titel.length > 50 ? expose.titel.slice(0, 47) + '...' : expose.titel],
     ['OBJEKTTYP', v(listing.objekttyp)],
     ['ORT', v(listing.adresse_ort)],
-    ['STRASSE', v(listing.adresse_strasse)],
+    ['STRASSE', strasseDisplay],
     ['PLZ', v(listing.adresse_plz)],
+    ['ADRESSE_ZEILE', adresseZeile],
     ['WOHNFLAECHE', v(listing.wohnflaeche_qm)],
     ['ZIMMER', v(listing.zimmer)],
     ['BAUJAHR', v(listing.baujahr)],
@@ -337,6 +415,9 @@ export async function fillTemplate(options: FillTemplateOptions): Promise<string
     ['ENERGIEVERBRAUCH', v(listing.energieverbrauch)],
     ['ENERGIETRAEGER', v(listing.energietraeger)],
     ['RENOVIERUNGSJAHR', v(listing.renovierungsjahr)],
+    ['FUSSBODENART', listing.fussbodenart?.join(', ') ?? '—'],
+    ['VERFUEGBAR_AB', listing.verfuegbar_ab ?? 'Nach Vereinbarung'],
+    ['STELLPLAETZE', formatStellplaetze(listing)],
     ['GRUNDSTEUER', '—'],
     ['PREIS_PRO_QM', preisPmqm?.toLocaleString('de-DE') ?? '—'],
     ['SCHULE_1', edi('SCHULE_1', infra.schule1?.name ?? '—')], ['SCHULE_1_DIST', edi('SCHULE_1_DIST', infra.schule1?.dist ?? '')],
@@ -361,6 +442,10 @@ export async function fillTemplate(options: FillTemplateOptions): Promise<string
 
   for (const [key, value] of replacements) {
     html = html.replaceAll(`{{${key}}}`, value)
+  }
+
+  if (!listing.grundriss_url) {
+    html = html.replace(/<!-- GRUNDRISS_PAGE_START -->[\s\S]*?<!-- GRUNDRISS_PAGE_END -->/g, '')
   }
 
   html = injectPrintBar(html, listing.id ?? '')

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, AlertCircle } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Upload, X, Loader2, ImageIcon } from 'lucide-react'
 import FotoUpload from '@/components/dashboard/FotoUpload'
 import { type FotoItem, normalizeFotos } from '@/lib/foto'
+import { createClient } from '@/lib/supabase/client'
 
 const inputBase =
   'w-full rounded-[8px] border border-[#DDDDDD] px-4 min-h-[52px] text-[15px] font-medium text-text-primary bg-white outline-none transition-all duration-200 placeholder:text-text-tertiary focus:ring-2 focus:ring-accent focus:border-transparent'
@@ -12,11 +13,15 @@ const inputBase =
 const labelBase = 'block text-[13px] font-semibold text-text-primary mb-1.5'
 
 const AUSSTATTUNG_OPTIONS = [
-  'Garage', 'Carport', 'Keller', 'Dachgeschoss ausgebaut',
-  'Balkon', 'Terrasse', 'Garten', 'Einbauküche',
-  'Parkett', 'Fußbodenheizung', 'Rollläden', 'Fahrstuhl',
-  'Barrierefrei', 'Pool', 'Sauna', 'Klimaanlage',
+  'Keller', 'Dachgeschoss ausgebaut',
+  'Balkon', 'Terrasse', 'Dachterrasse', 'Garten',
+  'Einbauküche', 'Sauna', 'Pool / Schwimmbad',
+  'Fußbodenheizung', 'Fahrstuhl', 'Rollläden',
+  'Barrierefrei', 'Gäste-WC', 'Kamin', 'Klimaanlage',
+  'Wintergarten', 'Vollbad', 'Duschbad',
 ]
+
+const FUSSBODENART_OPTIONS = ['Parkett', 'Laminat', 'Fliesen', 'Vinyl / PVC', 'Teppich', 'Sonstiges']
 
 interface ListingRow {
   id: string
@@ -44,6 +49,19 @@ interface ListingRow {
   energieverbrauch: number | null
   energietraeger: string | null
   ausstattung_items: string[] | null
+  // New fields
+  vermarktungsart: string | null
+  verfuegbar_ab: string | null
+  neubauprojekt: boolean | null
+  denkmalschutz: boolean | null
+  anzahl_etagen: number | null
+  anzahl_garagen: number | null
+  anzahl_carports: number | null
+  anzahl_stellplaetze: number | null
+  fussbodenart: string[] | null
+  standort_anzeige: string | null
+  grundriss_url: string | null
+  virtuelle_besichtigung_url: string | null
 }
 
 interface ObjektFormProps {
@@ -60,17 +78,65 @@ function SectionDivider({ title }: { title: string }) {
   )
 }
 
+function CheckToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`flex items-center gap-2 px-3 py-2.5 rounded-[6px] border transition-colors select-none text-left ${
+        checked ? 'bg-[#E8F5EE] border-accent' : 'bg-white border-[#DDDDDD] hover:border-[#AAAAAA]'
+      }`}
+    >
+      <span className={`w-4 h-4 rounded-[3px] flex-shrink-0 flex items-center justify-center border transition-colors ${checked ? 'bg-accent border-accent' : 'border-[#CCCCCC]'}`}>
+        {checked && (
+          <svg viewBox="0 0 10 8" width="10" height="8" fill="none">
+            <path d="M1 4l2.5 3L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </span>
+      <span className={`text-[12px] font-medium ${checked ? 'text-accent' : 'text-text-secondary'}`}>{label}</span>
+    </button>
+  )
+}
+
 export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [fotos, setFotos] = useState<FotoItem[]>(() => normalizeFotos(listing?.fotos ?? []))
   const [ausstattungItems, setAusstattungItems] = useState<string[]>(listing?.ausstattung_items ?? [])
+  const [fussbodenart, setFussbodenart] = useState<string[]>(listing?.fussbodenart ?? [])
+  const [grundrissUrl, setGrundrissUrl] = useState<string | null>(listing?.grundriss_url ?? null)
+  const [grundrissUploading, setGrundrissUploading] = useState(false)
+  const [standortNichtAnzeigen, setStandortNichtAnzeigen] = useState(
+    (listing?.standort_anzeige ?? 'genau') === 'ort'
+  )
+  const grundrissInputRef = useRef<HTMLInputElement>(null)
 
   function toggleAusstattung(item: string) {
-    setAusstattungItems(prev =>
-      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
-    )
+    setAusstattungItems(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item])
+  }
+
+  function toggleFussbodenart(item: string) {
+    setFussbodenart(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item])
+  }
+
+  async function handleGrundrissUpload(file: File) {
+    if (!file.type.startsWith('image/')) return
+    setGrundrissUploading(true)
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop() ?? 'jpg'
+      const path = `grundrisse/${userId}/${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('fotos').upload(path, file, { upsert: true })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('fotos').getPublicUrl(path)
+      setGrundrissUrl(publicUrl)
+    } catch {
+      // ignore upload errors silently
+    } finally {
+      setGrundrissUploading(false)
+    }
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -78,13 +144,15 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
     const formData = new FormData(e.currentTarget)
     formData.set('fotos', JSON.stringify(fotos))
     formData.set('ausstattung_items', JSON.stringify(ausstattungItems))
+    formData.set('fussbodenart', JSON.stringify(fussbodenart))
+    formData.set('grundriss_url', grundrissUrl ?? '')
+    formData.set('standort_anzeige', standortNichtAnzeigen ? 'ort' : 'genau')
     setSaveStatus('idle')
     startTransition(async () => {
       try {
         const result = await save(formData)
         setSaveStatus('saved')
         router.refresh()
-        // Fire-and-forget: geocode + infra via server-side API routes
         const idToRefresh = result?.listingId ?? listing?.id
         if (idToRefresh) {
           ;(async () => {
@@ -121,6 +189,20 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
           Objekt-Grunddaten
         </h2>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelBase}>Vermarktungsart</label>
+            <select name="vermarktungsart" className={inputBase} defaultValue={listing?.vermarktungsart ?? 'verkauf'}>
+              <option value="verkauf">Verkauf</option>
+              <option value="vermietung">Vermietung</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelBase}>Verfügbar ab</label>
+            <input type="text" name="verfuegbar_ab" className={inputBase} placeholder="Nach Vereinbarung" defaultValue={listing?.verfuegbar_ab ?? ''} />
+          </div>
+        </div>
+
         <div>
           <label className={labelBase}>Objekttyp</label>
           <select name="objekttyp" className={inputBase} defaultValue={listing?.objekttyp ?? ''}>
@@ -135,9 +217,42 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
           </select>
         </div>
 
+        <div className="flex gap-6">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="neubauprojekt"
+              defaultChecked={listing?.neubauprojekt ?? false}
+              className="w-4 h-4 accent-accent"
+            />
+            <span className="text-[13px] font-medium text-text-secondary">Neubauprojekt</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="denkmalschutz"
+              defaultChecked={listing?.denkmalschutz ?? false}
+              className="w-4 h-4 accent-accent"
+            />
+            <span className="text-[13px] font-medium text-text-secondary">Denkmalschutzobjekt</span>
+          </label>
+        </div>
+
+        {/* ── Adresse ── */}
+        <SectionDivider title="Adresse" />
+
         <div>
           <label className={labelBase}>Straße & Hausnummer</label>
           <input type="text" name="adresse_strasse" className={inputBase} placeholder="Musterstraße 1" defaultValue={listing?.adresse_strasse ?? ''} />
+          <label className="flex items-center gap-2 mt-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={standortNichtAnzeigen}
+              onChange={e => setStandortNichtAnzeigen(e.target.checked)}
+              className="w-4 h-4 accent-accent"
+            />
+            <span className="text-[12px] text-text-secondary">Straße nicht im Exposé anzeigen (nur PLZ + Ort)</span>
+          </label>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -150,6 +265,9 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
           </div>
         </div>
 
+        {/* ── Objektdaten ── */}
+        <SectionDivider title="Objektdaten" />
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelBase}>Wohnfläche (m²)</label>
@@ -161,42 +279,6 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={labelBase}>Baujahr</label>
-            <input type="number" name="baujahr" className={inputBase} placeholder="1990" min={1800} max={new Date().getFullYear()} defaultValue={listing?.baujahr ?? ''} />
-          </div>
-          <div>
-            <label className={labelBase}>Zustand</label>
-            <select name="zustand" className={inputBase} defaultValue={listing?.zustand ?? ''}>
-              <option value="">Bitte wählen</option>
-              <option>Neubau</option>
-              <option>Modernisiert</option>
-              <option>Gepflegt</option>
-              <option>Renovierungsbedürftig</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className={labelBase}>Verkaufspreis (€)</label>
-          <input type="number" name="preis" className={inputBase} placeholder="450000" min={1} defaultValue={listing?.preis ?? ''} />
-        </div>
-
-        <div>
-          <label className={labelBase}>Beschreibung</label>
-          <textarea
-            name="beschreibung"
-            className="w-full rounded-[8px] border border-[#DDDDDD] px-4 py-3 text-[15px] font-medium text-text-primary bg-white outline-none transition-all duration-200 placeholder:text-text-tertiary focus:ring-2 focus:ring-accent focus:border-transparent min-h-[120px] resize-vertical"
-            placeholder="Beschreibe deine Immobilie in 2–3 Sätzen..."
-            maxLength={2000}
-            defaultValue={listing?.beschreibung ?? ''}
-          />
-        </div>
-
-        {/* ── Details ── */}
-        <SectionDivider title="Details" />
-
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className={labelBase}>Badezimmer</label>
@@ -207,7 +289,7 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
             <input type="number" name="schlafzimmer" className={inputBase} placeholder="3" min={0} defaultValue={listing?.schlafzimmer ?? ''} />
           </div>
           <div>
-            <label className={labelBase}>Etage</label>
+            <label className={labelBase}>Etage (Lage)</label>
             <input type="text" name="etage" className={inputBase} placeholder="EG / 1. OG" defaultValue={listing?.etage ?? ''} />
           </div>
         </div>
@@ -222,36 +304,92 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
             <input type="number" name="grundstueck_qm" className={inputBase} placeholder="500" min={0} defaultValue={listing?.grundstueck_qm ?? ''} />
           </div>
           <div>
+            <label className={labelBase}>Etagen im Gebäude</label>
+            <input type="number" name="anzahl_etagen" className={inputBase} placeholder="2" min={1} defaultValue={listing?.anzahl_etagen ?? ''} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className={labelBase}>Garagen</label>
+            <input type="number" name="anzahl_garagen" className={inputBase} placeholder="0" min={0} defaultValue={listing?.anzahl_garagen ?? ''} />
+          </div>
+          <div>
+            <label className={labelBase}>Carports</label>
+            <input type="number" name="anzahl_carports" className={inputBase} placeholder="0" min={0} defaultValue={listing?.anzahl_carports ?? ''} />
+          </div>
+          <div>
+            <label className={labelBase}>Stellplätze</label>
+            <input type="number" name="anzahl_stellplaetze" className={inputBase} placeholder="0" min={0} defaultValue={listing?.anzahl_stellplaetze ?? ''} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelBase}>Baujahr</label>
+            <input type="number" name="baujahr" className={inputBase} placeholder="1990" min={1800} max={new Date().getFullYear()} defaultValue={listing?.baujahr ?? ''} />
+          </div>
+          <div>
             <label className={labelBase}>Renovierungsjahr</label>
             <input type="number" name="renovierungsjahr" className={inputBase} placeholder="2018" min={1900} max={new Date().getFullYear()} defaultValue={listing?.renovierungsjahr ?? ''} />
           </div>
         </div>
 
         <div>
-          <label className={labelBase}>Ausstattung</label>
+          <label className={labelBase}>Zustand</label>
+          <select name="zustand" className={inputBase} defaultValue={listing?.zustand ?? ''}>
+            <option value="">Bitte wählen</option>
+            <option>Neubau</option>
+            <option>Modernisiert</option>
+            <option>Gepflegt</option>
+            <option>Renovierungsbedürftig</option>
+          </select>
+        </div>
+
+        <div>
+          <label className={labelBase}>Verkaufspreis (€)</label>
+          <input type="number" name="preis" className={inputBase} placeholder="450000" min={1} defaultValue={listing?.preis ?? ''} />
+        </div>
+
+        <div>
+          <label className={labelBase}>Kurzbeschreibung</label>
+          <textarea
+            name="beschreibung"
+            className="w-full rounded-[8px] border border-[#DDDDDD] px-4 py-3 text-[15px] font-medium text-text-primary bg-white outline-none transition-all duration-200 placeholder:text-text-tertiary focus:ring-2 focus:ring-accent focus:border-transparent min-h-[120px] resize-vertical"
+            placeholder="Beschreibe deine Immobilie in 2–3 Sätzen..."
+            maxLength={2000}
+            defaultValue={listing?.beschreibung ?? ''}
+          />
+        </div>
+
+        {/* ── Ausstattung & Fußboden ── */}
+        <SectionDivider title="Ausstattung & Fußboden" />
+
+        <div>
+          <label className={labelBase}>Fußbodenart</label>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {FUSSBODENART_OPTIONS.map((option) => (
+              <CheckToggle
+                key={option}
+                label={option}
+                checked={fussbodenart.includes(option)}
+                onChange={() => toggleFussbodenart(option)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className={labelBase}>Ausstattungsmerkmale</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {AUSSTATTUNG_OPTIONS.map((option) => {
-              const checked = ausstattungItems.includes(option)
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => toggleAusstattung(option)}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-[6px] border transition-colors select-none text-left ${
-                    checked ? 'bg-[#E8F5EE] border-accent' : 'bg-white border-[#DDDDDD] hover:border-[#AAAAAA]'
-                  }`}
-                >
-                  <span className={`w-4 h-4 rounded-[3px] flex-shrink-0 flex items-center justify-center border transition-colors ${checked ? 'bg-accent border-accent' : 'border-[#CCCCCC]'}`}>
-                    {checked && (
-                      <svg viewBox="0 0 10 8" width="10" height="8" fill="none">
-                        <path d="M1 4l2.5 3L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </span>
-                  <span className={`text-[12px] font-medium ${checked ? 'text-accent' : 'text-text-secondary'}`}>{option}</span>
-                </button>
-              )
-            })}
+            {AUSSTATTUNG_OPTIONS.map((option) => (
+              <CheckToggle
+                key={option}
+                label={option}
+                checked={ausstattungItems.includes(option)}
+                onChange={() => toggleAusstattung(option)}
+              />
+            ))}
           </div>
         </div>
 
@@ -313,6 +451,59 @@ export default function ObjektForm({ listing, userId, save }: ObjektFormProps) {
           initialFotos={normalizeFotos(listing?.fotos ?? [])}
           onChange={setFotos}
         />
+
+        {/* ── Grundriss ── */}
+        <SectionDivider title="Grundriss" />
+
+        <div>
+          <p className="text-[12px] text-text-secondary mb-3">
+            Lade einen Grundriss als Bild hoch. Falls kein Grundriss vorhanden, wird die Grundriss-Seite im Exposé weggelassen.
+          </p>
+          {grundrissUrl ? (
+            <div className="relative inline-block">
+              <img src={grundrissUrl} alt="Grundriss" className="h-40 w-auto rounded-lg border border-[#DDDDDD] object-contain bg-[#F9F9F9]" />
+              <button
+                type="button"
+                onClick={() => setGrundrissUrl(null)}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => grundrissInputRef.current?.click()}
+              disabled={grundrissUploading}
+              className="flex items-center gap-2 px-4 py-3 rounded-[8px] border border-dashed border-[#DDDDDD] text-[13px] text-text-secondary hover:border-accent hover:text-accent transition-colors disabled:opacity-60"
+            >
+              {grundrissUploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
+              {grundrissUploading ? 'Wird hochgeladen…' : 'Grundriss hochladen (JPG, PNG)'}
+            </button>
+          )}
+          <input
+            ref={grundrissInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleGrundrissUpload(f) }}
+          />
+        </div>
+
+        {/* ── Virtuelle Besichtigung ── */}
+        <SectionDivider title="Virtuelle Besichtigung" />
+
+        <div>
+          <label className={labelBase}>360°-Rundgang URL</label>
+          <input
+            type="url"
+            name="virtuelle_besichtigung_url"
+            className={inputBase}
+            placeholder="https://my.matterport.com/..."
+            defaultValue={listing?.virtuelle_besichtigung_url ?? ''}
+          />
+          <p className="text-[11px] text-text-tertiary mt-1">Optional — erscheint als Hinweis im Exposé</p>
+        </div>
 
         {/* Feedback & Submit */}
         {saveStatus === 'saved' && (

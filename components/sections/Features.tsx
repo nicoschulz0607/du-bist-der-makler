@@ -1,4 +1,4 @@
-import { Sparkles, TrendingUp, Users, BadgeEuro } from 'lucide-react'
+import { Sparkles, TrendingUp, Users, BadgeEuro, MessageCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 interface Feature {
@@ -32,6 +32,12 @@ const features: Feature[] = [
     description:
       'Du zahlst einmal, fertig. Keine 3–6 % Maklercourtage, keine versteckten Kosten, keine Überraschungen.',
   },
+  {
+    icon: MessageCircle,
+    title: 'KI-Chatbot 24/7',
+    description:
+      'Fragen zum Verkaufsprozess — sofort beantwortet, rund um die Uhr. Kein Warten auf Support-Öffnungszeiten.',
+  },
 ]
 
 export default function Features() {
@@ -54,14 +60,14 @@ export default function Features() {
           </p>
         </div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Feature Cards — flex-wrap so bottom 2 cards center automatically */}
+        <div className="flex flex-wrap justify-center gap-6">
           {features.map((feature) => {
             const Icon = feature.icon
             return (
               <div
                 key={feature.title}
-                className="bg-white rounded-card border border-[#DDDDDD] p-6 shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-hover hover:border-accent group"
+                className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] bg-white rounded-card border border-[#DDDDDD] p-6 shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-hover hover:border-accent group"
               >
                 {/* Icon */}
                 <div
@@ -80,6 +86,16 @@ export default function Features() {
               </div>
             )
           })}
+        </div>
+
+        {/* CTA */}
+        <div className="flex justify-center mt-12">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-pill border border-[#DDDDDD] px-6 py-2.5 text-[14px] font-semibold text-text-secondary hover:border-accent hover:text-accent transition-colors duration-150"
+          >
+            Demo erkunden
+          </button>
         </div>
       </div>
     </section>

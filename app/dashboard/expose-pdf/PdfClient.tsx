@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { ExternalLink, FileText, AlertCircle, CheckCircle2, Home, Images } from 'lucide-react'
+import { Download, FileText, AlertCircle, CheckCircle2, Home, Images, Eye, Loader2 } from 'lucide-react'
 
 interface PdfClientProps {
   listing: {
@@ -19,6 +20,29 @@ interface PdfClientProps {
 }
 
 export default function PdfClient({ listing }: PdfClientProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleDownload = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/expose-pdf')
+      if (!res.ok) throw new Error(`Fehler ${res.status}`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'expose.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError('PDF konnte nicht erstellt werden. Bitte erneut versuchen.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!listing) {
     return (
       <div className="bg-white border border-[#DDDDDD] rounded-xl p-10 flex flex-col items-center text-center">
@@ -63,7 +87,7 @@ export default function PdfClient({ listing }: PdfClientProps) {
         )}
       </div>
 
-      {/* Checkliste was ins Exposé kommt */}
+      {/* Checkliste */}
       <div className="bg-white border border-[#DDDDDD] rounded-xl p-6 space-y-4">
         <p className="text-[15px] font-bold text-text-primary" style={{ letterSpacing: '-0.18px' }}>
           Was ins Exposé kommt
@@ -139,15 +163,34 @@ export default function PdfClient({ listing }: PdfClientProps) {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => window.open('/api/expose-pdf', '_blank')}
-          disabled={!hasExpose}
-          className="inline-flex items-center justify-center gap-2 rounded-pill bg-accent hover:bg-accent-hover text-white text-[14px] font-semibold px-6 h-11 transition-colors duration-150 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
-        >
-          <ExternalLink size={15} />
-          Exposé anzeigen
-        </button>
+        {error && (
+          <p className="text-[12px] text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={!hasExpose || loading}
+            className="inline-flex items-center justify-center gap-2 rounded-pill bg-accent hover:bg-accent-hover text-white text-[14px] font-semibold px-6 h-11 transition-colors duration-150 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+          >
+            {loading ? <><Loader2 size={15} className="animate-spin" />Wird erstellt…</> : <><Download size={15} />PDF herunterladen</>}
+          </button>
+
+          {hasExpose && (
+            <a
+              href="/api/expose-preview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-pill border border-[#DDDDDD] text-text-primary hover:border-[#BBBBBB] text-[14px] font-semibold px-5 h-11 transition-colors duration-150"
+            >
+              <Eye size={15} />
+              Vorschau
+            </a>
+          )}
+        </div>
 
         {!hasExpose && (
           <p className="text-[12px] text-text-tertiary">
@@ -155,13 +198,13 @@ export default function PdfClient({ listing }: PdfClientProps) {
             <Link href="/dashboard/expose" className="text-accent font-semibold hover:underline">
               Inserat-Texte generieren
             </Link>
-            , bevor das Exposé angezeigt werden kann.
+            , bevor das Exposé erstellt werden kann.
           </p>
         )}
 
         {hasExpose && (
           <p className="text-[12px] text-text-tertiary">
-            Das Exposé öffnet in einem neuen Tab. Zum Speichern als PDF: Strg+P → "Als PDF speichern".
+            PDF-Erstellung dauert ca. 10–15 Sekunden.
           </p>
         )}
       </div>

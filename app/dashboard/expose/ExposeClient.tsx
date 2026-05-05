@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Sparkles, Copy, Check, Home, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react'
 import type { ExposeOutput } from '@/lib/claude/expose'
+import InlineButton from '@/components/klara/InlineButton'
 
 interface ListingData {
   objekttyp: string | null
@@ -308,8 +309,12 @@ export default function ExposeClient({ listing }: ExposeClientProps) {
             </div>
           </div>
 
-          {/* Alles kopieren */}
-          <div className="flex justify-end">
+          {/* Alles kopieren + Klara */}
+          <div className="flex items-center justify-between">
+            <InlineButton
+              prefilledQuestion="Kannst du meinen Exposé-Text sprachlich verbessern und überzeugender machen?"
+              label="Klara um Stilverbesserung bitten"
+            />
             <CopyButton text={allText} label="Alles kopieren" />
           </div>
         </div>

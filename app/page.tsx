@@ -3,7 +3,6 @@ import Hero from '@/components/sections/Hero'
 import HowItWorks from '@/components/sections/HowItWorks'
 import Features from '@/components/sections/Features'
 import Pricing from '@/components/sections/Pricing'
-import Comparison from '@/components/sections/Comparison'
 import FAQ from '@/components/sections/FAQ'
 import ClosingCTA from '@/components/sections/ClosingCTA'
 import Footer from '@/components/sections/Footer'
@@ -17,7 +16,6 @@ export default function LandingPage() {
         <HowItWorks />
         <Features />
         <Pricing />
-        <Comparison />
         <FAQ />
         <ClosingCTA />
       </main>

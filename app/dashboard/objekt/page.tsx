@@ -45,6 +45,18 @@ async function speicherObjekt(formData: FormData): Promise<{ listingId: string |
     energieverbrauch: num('energieverbrauch'),
     energietraeger: str('energietraeger'),
     ausstattung_items: (() => { try { return JSON.parse(formData.get('ausstattung_items') as string) } catch { return [] } })(),
+    vermarktungsart: str('vermarktungsart'),
+    verfuegbar_ab: str('verfuegbar_ab'),
+    neubauprojekt: formData.get('neubauprojekt') === 'on',
+    denkmalschutz: formData.get('denkmalschutz') === 'on',
+    anzahl_etagen: num('anzahl_etagen'),
+    anzahl_garagen: num('anzahl_garagen'),
+    anzahl_carports: num('anzahl_carports'),
+    anzahl_stellplaetze: num('anzahl_stellplaetze'),
+    fussbodenart: (() => { try { return JSON.parse(formData.get('fussbodenart') as string) } catch { return [] } })(),
+    standort_anzeige: str('standort_anzeige') ?? 'genau',
+    grundriss_url: str('grundriss_url'),
+    virtuelle_besichtigung_url: str('virtuelle_besichtigung_url'),
   }
 
   if (listingId) {
@@ -72,7 +84,10 @@ export default async function ObjektPage() {
       energieausweis_klasse, beschreibung, status, fotos,
       badezimmer, schlafzimmer, etage, nutzflaeche_qm, grundstueck_qm,
       renovierungsjahr, heizungsart, energieausweis_typ, energieverbrauch,
-      energietraeger, ausstattung_items
+      energietraeger, ausstattung_items,
+      vermarktungsart, verfuegbar_ab, neubauprojekt, denkmalschutz,
+      anzahl_etagen, anzahl_garagen, anzahl_carports, anzahl_stellplaetze,
+      fussbodenart, standort_anzeige, grundriss_url, virtuelle_besichtigung_url
     `)
     .eq('user_id', user.id)
     .limit(1)

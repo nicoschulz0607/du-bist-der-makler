@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Exposé – {{TITEL}}</title>
+<title>Exposé – {{TITEL_TEXT}}</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 
@@ -58,9 +58,36 @@ body {
   flex-direction: column;
 }
 
+@page {
+  size: A4;
+  margin: 0;
+}
+
 @media print {
-  body { background: white; }
-  .page { margin: 0; box-shadow: none; }
+  html, body { margin: 0; padding: 0; background: white; }
+  body { display: flex; flex-direction: column; }
+  .page {
+    margin: 0;
+    box-shadow: none;
+    width: 100% !important;
+    height: var(--page-h);
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  /* Cover: Hero und Content auf feste Größen fixieren, kein Shrinking */
+  .cover-hero, .cover-hero-placeholder { flex: 0 0 120mm; }
+  .cover-content { flex: 1 0 0; }
+  /* Schwarze Vollflächenebene als unterste Layer – unabhängig von Flex-Höhen */
+  .page-cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--black);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    z-index: -1;
+  }
+  iframe { display: none !important; }
 }
 
 /* ============================================================
@@ -120,7 +147,9 @@ body {
 .page-cover {
   background: var(--black);
   color: var(--white);
-  min-height: var(--page-h);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  isolation: isolate;
 }
 
 .cover-top-bar {
@@ -763,6 +792,7 @@ body {
 .galerie-img {
   width: 100%;
   height: 100%;
+  min-height: 0;
   object-fit: cover;
   border-radius: 1.5mm;
   display: block;
@@ -1130,7 +1160,7 @@ body {
       <table class="fakten-table">
         <tr><td colspan="2" class="td-divider">Objekt</td></tr>
         <tr><td class="td-label">Objekttyp</td><td class="td-value">{{OBJEKTTYP}}</td></tr>
-        <tr><td class="td-label">Adresse</td><td class="td-value">{{STRASSE}}, {{PLZ}} {{ORT}}</td></tr>
+        <tr><td class="td-label">Adresse</td><td class="td-value">{{ADRESSE_ZEILE}}</td></tr>
         <tr><td class="td-label">Wohnfläche</td><td class="td-value">ca. {{WOHNFLAECHE}} m²</td></tr>
         <tr><td class="td-label">Nutzfläche</td><td class="td-value">{{NUTZFLAECHE}} m²</td></tr>
         <tr><td class="td-label">Grundstücksgröße</td><td class="td-value">{{GRUNDSTUECK}} m²</td></tr>
@@ -1141,6 +1171,9 @@ body {
         <tr><td class="td-label">Baujahr</td><td class="td-value">{{BAUJAHR}}</td></tr>
         <tr><td class="td-label">Letztes Renovierungsjahr</td><td class="td-value">{{RENOVIERUNGSJAHR}}</td></tr>
         <tr><td class="td-label">Zustand</td><td class="td-value">{{ZUSTAND}}</td></tr>
+        <tr><td class="td-label">Verfügbar ab</td><td class="td-value">{{VERFUEGBAR_AB}}</td></tr>
+        <tr><td class="td-label">Stellplätze</td><td class="td-value">{{STELLPLAETZE}}</td></tr>
+        <tr><td class="td-label">Fußböden</td><td class="td-value">{{FUSSBODENART}}</td></tr>
         <tr><td colspan="2" class="td-divider">Kosten</td></tr>
         <tr><td class="td-label">Kaufpreis</td><td class="td-value">{{KAUFPREIS}} €</td></tr>
         <tr><td class="td-label">Preis pro m²</td><td class="td-value">ca. {{PREIS_PRO_QM}} €/m²</td></tr>
@@ -1255,7 +1288,7 @@ body {
         <div class="map-pin"></div>
       </div>
       <p style="font-size: 7pt; color: var(--gray-500); text-align: center; margin-top: 2mm;">
-        {{STRASSE}}, {{PLZ}} {{ORT}}
+        {{ADRESSE_ZEILE}}
       </p>
     </div>
   </div>
@@ -1266,6 +1299,7 @@ body {
   </div>
 </div>
 
+<!-- GRUNDRISS_PAGE_START -->
 <!-- ============================================================
      SEITE 7 — GRUNDRISS
      ============================================================ -->
@@ -1294,6 +1328,7 @@ body {
     <span class="page-num">7</span>
   </div>
 </div>
+<!-- GRUNDRISS_PAGE_END -->
 
 <!-- ============================================================
      SEITE 8 — FOTO-GALERIE (Teil 1)

@@ -9,6 +9,7 @@ import {
   FileText,
   TrendingUp,
   MessageSquare,
+  Sparkles,
   Users,
   CalendarDays,
   Handshake,
@@ -64,7 +65,7 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
         { label: 'Inserat-Texte', href: '/dashboard/expose', icon: <FileText size={16} strokeWidth={1.75} />, requiredTier: 'pro', badge: 'Pro' },
         { label: 'KI-Exposé PDF', href: '/dashboard/expose-pdf', icon: <FileText size={16} strokeWidth={1.75} />, requiredTier: 'pro', badge: 'Pro' },
         { label: 'Preisrechner', href: '/dashboard/preisrechner', icon: <TrendingUp size={16} strokeWidth={1.75} />, requiredTier: 'pro', badge: 'Pro' },
-        { label: 'KI-Chatbot', href: '/dashboard/chatbot', icon: <MessageSquare size={16} strokeWidth={1.75} /> },
+        { label: 'Klara KI-Assistentin', href: '/dashboard/klara', icon: <Sparkles size={16} strokeWidth={1.75} /> },
       ],
     },
     {

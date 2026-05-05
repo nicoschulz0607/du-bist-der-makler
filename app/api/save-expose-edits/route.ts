@@ -11,26 +11,22 @@ export async function POST(req: NextRequest) {
 
   const { data: listing } = await supabase
     .from('listings')
-    .select('id, expose_html')
+    .select('id, expose_edits')
     .eq('id', listing_id)
     .eq('user_id', user.id)
     .single()
 
   if (!listing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  let currentExpose: Record<string, unknown> = {}
-  try {
-    if (listing.expose_html) currentExpose = JSON.parse(listing.expose_html)
-  } catch {}
-
-  const mergedExpose: Record<string, unknown> = { ...currentExpose }
+  // Merge into expose_edits (not expose_html) — survives AI re-generation
+  const currentEdits: Record<string, unknown> = listing.expose_edits ?? {}
   if (expose && typeof expose === 'object') {
     for (const [key, value] of Object.entries(expose as Record<string, unknown>)) {
-      if (value != null) mergedExpose[key] = value
+      if (value != null) currentEdits[key] = value
     }
   }
 
-  const updateData: Record<string, unknown> = { expose_html: JSON.stringify(mergedExpose) }
+  const updateData: Record<string, unknown> = { expose_edits: currentEdits }
 
   if (infra && typeof infra === 'object') {
     const filteredInfra = Object.fromEntries(

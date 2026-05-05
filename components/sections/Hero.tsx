@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import WaitlistForm from '@/components/WaitlistForm'
 import { CheckCircle2, TrendingUp, FileText } from 'lucide-react'
 
 const trustBadges = [
@@ -93,19 +92,13 @@ function PropertyMockup() {
 export default function Hero() {
   return (
     <section
-      className="pt-[120px] pb-[80px] md:pt-[160px] md:pb-[120px] bg-white overflow-hidden"
+      className="pt-[140px] pb-[100px] md:pt-[220px] md:pb-[180px] bg-white overflow-hidden"
       aria-labelledby="hero-heading"
     >
       <div className="container-landing">
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
           {/* Left: Text */}
           <div className="flex-1 min-w-0">
-            {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 rounded-pill bg-accent-light px-4 py-1.5 text-accent text-[13px] font-semibold tracking-wide mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" aria-hidden="true" />
-              Jetzt in der Beta – früh einsteigen, Vorzugspreis sichern
-            </div>
-
             {/* H1 */}
             <h1
               id="hero-heading"
@@ -141,14 +134,6 @@ export default function Hero() {
               >
                 So funktioniert&apos;s
               </a>
-            </div>
-
-            {/* Waitlist Form */}
-            <div className="mb-8">
-              <p className="text-[12px] font-semibold text-text-tertiary mb-3 uppercase tracking-wider">
-                Oder direkt auf die Warteliste
-              </p>
-              <WaitlistForm />
             </div>
 
             {/* Trust Badges */}
