@@ -11,6 +11,15 @@ export const maxDuration = 60
 // Cached browser instance — avoids 3-5s Chrome startup on repeated calls
 let cachedBrowser: unknown = null
 
+type PuppeteerPage = {
+  setDefaultTimeout: (ms: number) => void
+  goto: (url: string, opts: unknown) => Promise<void>
+  evaluate: (fn: () => unknown) => Promise<unknown>
+  pdf: (opts: unknown) => Promise<Buffer>
+  emulateMediaType: (type: string) => Promise<void>
+  addStyleTag: (opts: { content: string }) => Promise<unknown>
+}
+
 async function getBrowser(puppeteer: { launch: (opts: unknown) => Promise<unknown> }) {
   const b = cachedBrowser as { connected?: boolean } | null
   if (!b || !b.connected) {
@@ -19,14 +28,7 @@ async function getBrowser(puppeteer: { launch: (opts: unknown) => Promise<unknow
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     })
   }
-  return cachedBrowser as {
-    newPage: () => Promise<{
-      setDefaultTimeout: (ms: number) => void
-      goto: (url: string, opts: unknown) => Promise<void>
-      evaluate: (fn: () => Promise<unknown>) => Promise<unknown>
-      pdf: (opts: unknown) => Promise<Buffer>
-    }>
-  }
+  return cachedBrowser as { newPage: () => Promise<PuppeteerPage> }
 }
 
 export async function GET(req: NextRequest) {
@@ -148,7 +150,7 @@ export async function GET(req: NextRequest) {
     })
     console.log('[expose-pdf] Done, size:', (pdf as Buffer).length)
 
-    return new NextResponse(pdf, {
+    return new NextResponse(pdf as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': 'attachment; filename="expose.pdf"',
