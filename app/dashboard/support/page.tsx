@@ -2,19 +2,30 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { canAccess, type Tier } from '@/lib/tier'
 import LockedPage from '@/components/dashboard/LockedPage'
+import MaklerSupportHero from '@/components/makler-support/MaklerSupportHero'
+import MaklerAnfrageStatusKarte from '@/components/makler-support/MaklerAnfrageStatusKarte'
+import MaklerAnfrageForm from '@/components/makler-support/MaklerAnfrageForm'
 
 export const metadata = { title: 'Makler-Support — Dashboard' }
 
+type Anfrage = {
+  id: string
+  status: string
+  thema: string
+  bestätigter_termin: string | null
+  bestätigte_dauer_minuten: number | null
+  admin_notiz: string | null
+  created_at: string
+}
+
 export default async function SupportPage() {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('paket_tier')
+    .select('paket_tier, vorname')
     .eq('id', user.id)
     .single()
 
@@ -36,6 +47,37 @@ export default async function SupportPage() {
     )
   }
 
+  const [anfrageRes, listingRes, inklusivRes] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from('makler_anfragen')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }) as Promise<{ data: unknown[] | null }>,
+    supabase
+      .from('listings')
+      .select('id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle(),
+    supabase.rpc('user_hat_inklusiv_stunde_genutzt', { check_user_id: user.id }),
+  ])
+
+  const anfragen = (anfrageRes.data ?? []) as unknown as Anfrage[]
+  const inklusivGenutzt = inklusivRes.data ?? false
+  const listingId = listingRes.data?.id ?? null
+
+  const showState =
+    !inklusivGenutzt
+      ? 'premium_inklusiv_verfügbar'
+      : ('premium_zahlpflichtig' as const)
+
+  const aktiveAnfrage = anfragen.find(
+    (a) => a.status === 'neu' || a.status === 'bestätigt'
+  ) ?? null
+
+  const hatOffeneAnfrage = aktiveAnfrage?.status === 'neu'
+
   return (
     <div className="space-y-6">
       <div>
@@ -44,10 +86,27 @@ export default async function SupportPage() {
         </h1>
         <p className="text-[14px] text-text-secondary">Dein direkter Draht zum Makler-Kollegen.</p>
       </div>
-      <div className="bg-white border border-[#DDDDDD] rounded-xl p-10 flex flex-col items-center text-center">
-        <p className="text-[15px] font-semibold text-text-primary mb-2">Buchung kommt in Kürze</p>
-        <p className="text-[13px] text-text-secondary">Die Buchungsfunktion für deine inklusive Makler-Stunde wird gerade eingerichtet. Du wirst per E-Mail benachrichtigt.</p>
-      </div>
+
+      <MaklerSupportHero showState={showState} />
+
+      {aktiveAnfrage && (
+        <MaklerAnfrageStatusKarte anfrage={aktiveAnfrage} />
+      )}
+
+      {!hatOffeneAnfrage && (
+        <MaklerAnfrageForm listingId={listingId} />
+      )}
+
+      {anfragen.length > 1 && (
+        <div>
+          <h2 className="text-[15px] font-bold text-text-primary mb-3">Frühere Anfragen</h2>
+          <div className="space-y-2">
+            {anfragen.slice(1).map((a) => (
+              <MaklerAnfrageStatusKarte key={a.id} anfrage={a} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
