@@ -18,6 +18,7 @@ import {
   LogOut,
   Lock,
   ChevronRight,
+  Compass,
 } from 'lucide-react'
 import { canAccess, getTierLabel, type Tier } from '@/lib/tier'
 import { createClient } from '@/lib/supabase/client'
@@ -55,6 +56,7 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
       title: 'Mein Verkauf',
       items: [
         { label: 'Übersicht', href: '/dashboard', icon: <LayoutDashboard size={16} strokeWidth={1.75} /> },
+        { label: 'Geführter Modus', href: '/dashboard/start', icon: <Compass size={16} strokeWidth={1.75} /> },
         { label: 'Schritt-für-Schritt', href: '/dashboard/schritte', icon: <CheckSquare size={16} strokeWidth={1.75} /> },
         { label: 'Mein Objekt', href: '/dashboard/objekt', icon: <Home size={16} strokeWidth={1.75} /> },
       ],

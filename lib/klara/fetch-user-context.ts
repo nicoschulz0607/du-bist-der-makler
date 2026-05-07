@@ -38,8 +38,9 @@ export async function fetchUserContext(
   const { data: listing } = await supabase
     .from('listings')
     .select(`
-      id, objekttyp, adresse_plz, adresse_ort, wohnflaeche_qm, zimmer,
-      baujahr, preis, energieausweis_klasse, status, fotos, created_at
+      id, objekttyp, adresse_strasse, adresse_plz, adresse_ort, wohnflaeche_qm, zimmer,
+      baujahr, preis, energieausweis_klasse, energieausweis_status, status, fotos,
+      expose_html, grundriss_url, created_at
     `)
     .eq('user_id', userId)
     .limit(1)
@@ -122,9 +123,201 @@ export async function fetchUserContext(
   }
 
   lines.push('')
-  lines.push(`Kontext-Origin (woher die Frage kommt): „${contextOrigin}"`)
+  lines.push(`Kontext-Origin: „${contextOrigin}"`)
+
+  // Wizard station context — injected when user is in the guided wizard
+  const wizardMatch = contextOrigin.match(/wizard:station_(\d+)_/)
+  if (wizardMatch) {
+    const stationNum = parseInt(wizardMatch[1])
+    lines.push('')
+    lines.push('---')
+    lines.push(buildWizardStationGuidance(stationNum, listing, profile))
+  }
 
   return lines.join('\n')
+}
+
+function buildWizardStationGuidance(stationNum: number, listing: any, profile: any): string {
+  const g: string[] = []
+  g.push(`## WIZARD-STATION ${stationNum} — Dein Fokus jetzt`)
+  g.push('')
+
+  switch (stationNum) {
+    case 1:
+      g.push('Station 1: Willkommen & Standortbestimmung.')
+      g.push('Der Nutzer startet seinen Verkaufs-Wizard mit 3 Orientierungsfragen (erste Immobilie? Zeithorizont? Tempo?). Das Quiz personalisiert den weiteren Ablauf.')
+      g.push('')
+      g.push('DEINE AUFGABE: Mach Lust auf den Prozess. Erkläre kurz was den Nutzer im Wizard erwartet und warum strukturiertes Vorgehen beim Privatverkauf so viel ausmacht.')
+      break
+
+    case 2:
+      g.push('Station 2: Persönliche Eckdaten.')
+      g.push('Der Nutzer trägt Vorname, Nachname, Telefon, E-Mail, Anschrift ein. Diese Daten erscheinen später im Exposé-PDF und im Kontaktblock des Inserats.')
+      g.push('')
+      g.push(`STATUS: Vorname ${profile?.vorname ? `"${profile.vorname}" ✓` : '✗ noch nicht gesetzt'}.`)
+      g.push('')
+      g.push('RECHTLICHES: Name + Kontaktmöglichkeit sind Pflicht (Fernkommunikation). Im Privatverkauf weniger streng als gewerblich, aber unbedingt empfehlenswert. Eine Mobilnummer reicht.')
+      break
+
+    case 3: {
+      g.push('Station 3: Objekt-Grunddaten.')
+      g.push('Objekttyp, Adresse (mit Geocoding), Wohnfläche, Zimmer, Baujahr, Zustand.')
+      g.push('')
+      const checks: string[] = []
+      if (!listing) {
+        checks.push('✗ Noch kein Objekt angelegt — muss in dieser Station erstellt werden')
+      } else {
+        if (!listing.adresse_strasse) checks.push('✗ Straßenadresse fehlt')
+        if (!listing.wohnflaeche_qm) checks.push('✗ Wohnfläche fehlt (Pflicht)')
+        if (!listing.zimmer) checks.push('✗ Zimmeranzahl fehlt (Pflicht)')
+        if (!listing.objekttyp) checks.push('✗ Objekttyp fehlt')
+        if (!listing.baujahr) checks.push('⚠ Baujahr fehlt (wichtig für Preisschätzung)')
+      }
+      if (checks.length > 0) {
+        g.push('FEHLENDE DATEN:')
+        g.push(...checks)
+      } else {
+        g.push('STATUS: ✓ Alle Pflichtdaten eingetragen.')
+      }
+      g.push('')
+      g.push('TIPP: Die Adresse wird für die Marktdatenabfrage in Station 4 gebraucht. Auf Wunsch kann die Straße im Inserat ausgeblendet werden (nur PLZ + Ort zeigen).')
+      break
+    }
+
+    case 4:
+      g.push('Station 4: Lage & Umgebung (passiv).')
+      g.push('KI analysiert die Lage: Lage-Score, Geräuschpegel, ÖPNV, Schulen, Vergleichsangebote. Kein User-Input nötig.')
+      g.push('')
+      g.push('ERKLÄRE: Lage macht 30–40% des Immobilienwerts aus. Guter ÖPNV, Schulen, geringe Lärmbelastung erhöhen den Wert. Der Lage-Score hilft beim Preisargumentieren mit Interessenten.')
+      g.push('TIPP: Selbst bei "mittelmäßiger" Lage gibt es immer Stärken — hilf dem Nutzer diese zu sehen.')
+      break
+
+    case 5: {
+      g.push('Station 5: Marktwert ermitteln.')
+      g.push('KI liefert eine Preisspanne. Der Nutzer setzt seinen Verkaufspreis per Slider.')
+      g.push('')
+      const preis = listing?.preis
+      g.push(`STATUS: Preis ${preis ? `✓ gesetzt: ${preis.toLocaleString('de-DE')} €` : '✗ noch nicht festgelegt'}.`)
+      g.push('')
+      g.push('WICHTIG: Zu hoher Preis → "Preisstigma" → im Schnitt +4 Monate Verkaufsdauer. Zu niedrig → Geld verloren. Empfehlung: Mit Markt-Oberkante starten, nach 3–4 Wochen ohne Angebote anpassen.')
+      g.push('Verhandlungspuffer von 3–5% einkalkulieren ist normal und wird von Käufern erwartet.')
+      break
+    }
+
+    case 6: {
+      g.push('Station 6: Energieausweis.')
+      g.push('Drei Optionen: (a) Upload eines vorhandenen, (b) Neu bestellen, (c) Nachreichen.')
+      g.push('')
+      const eaStatus = listing?.energieausweis_status
+      g.push(`STATUS: ${eaStatus ? `"${eaStatus}"` : 'noch nicht gesetzt'}.`)
+      g.push('')
+      g.push('RECHTLICHES: Energieausweis ist Pflicht (GEG §80). Muss spätestens bei Besichtigung vorliegen. Bußgeld bis 15.000 € bei Nichtvorlage.')
+      g.push('PRAKTISCH: Online-Bestellung 2–3 Werktage, ca. 50–150 €. Verbrauchsausweis (günstiger) vs. Bedarfsausweis (für Gebäude vor 1977 oder ≤4 Wohneinheiten mit Niedrigenergiebauweise erforderlich).')
+      break
+    }
+
+    case 7: {
+      g.push('Station 7: Fotos hochladen.')
+      g.push('Drag-and-drop, KI erkennt Raumtyp, Sortierung per Drag. Mindestens 1 Pflicht, ideal 8–15.')
+      g.push('')
+      const fotoCount = Array.isArray(listing?.fotos) ? (listing.fotos as unknown[]).length : 0
+      if (fotoCount === 0) {
+        g.push(`STATUS: ⚠️ Keine Fotos hochgeladen. Mindestens 1 Foto ist Pflicht für die Veröffentlichung.`)
+      } else if (fotoCount < 5) {
+        g.push(`STATUS: ⚠️ Nur ${fotoCount} Foto${fotoCount === 1 ? '' : 's'} — Inserate mit 8+ Fotos haben deutlich mehr Anfragen.`)
+      } else if (fotoCount < 8) {
+        g.push(`STATUS: ${fotoCount} Fotos — gut, aber 8–15 wäre ideal.`)
+      } else {
+        g.push(`STATUS: ✓ ${fotoCount} Fotos hochgeladen — sehr gut!`)
+      }
+      g.push('')
+      g.push('FOTO-TIPPS: Tageslicht, Querformat, aufgeräumt, keine Personen/Spiegel. Pflicht-Räume: Wohnzimmer, Küche, Bad, Schlafzimmer, Außenansicht.')
+      g.push('IMPACT: 8+ Fotos = ~30% schnellerer Verkauf und bis zu 5% höherer Preis laut Studien.')
+      break
+    }
+
+    case 8: {
+      g.push('Station 8: Grundriss (optional).')
+      g.push('Upload eines Grundrisses als Bild oder PDF. Drei Optionen: hochladen / keiner vorhanden / nachreichen.')
+      g.push('')
+      g.push(`STATUS: ${listing?.grundriss_url ? '✓ Grundriss hochgeladen' : '✗ Kein Grundriss vorhanden'}.`)
+      g.push('')
+      g.push('WARUM WICHTIG: Grundriss erhöht die Anfragequote signifikant — viele Interessenten entscheiden anhand des Grundrisses ob sie besichtigen wollen.')
+      g.push('KEINE HABEN? Roomle.com oder Floorplanner kostenlos nutzbar. Eine handgezeichnete Skizze mit Maßen funktioniert auch.')
+      break
+    }
+
+    case 9: {
+      g.push('Station 9: Ausstattung & Beschreibung.')
+      g.push('Checkbox-Grid für Ausstattungsmerkmale + optionaler Freitext.')
+      g.push('')
+      const beschreibung = listing?.beschreibung
+      g.push(`STATUS: Beschreibungstext ${beschreibung ? '✓ vorhanden' : '✗ noch nicht ausgefüllt (KI generiert ihn in Station 10 automatisch)'}.`)
+      g.push('')
+      g.push('AGG-HINWEIS: Im Inserat keine Bezugnahme auf Herkunft, Religion, Alter, Geschlecht, Behinderung — auch nicht indirekt. "Ruhige Familie bevorzugt" ist problematisch.')
+      g.push('SCHREIBTIPP: Emotional starten ("Sonnendurchflutetes Eckwohnzimmer mit Südbalkon"), dann sachlich mit konkreten Fakten. Keine Floskeln wie "traumhaft" oder "einzigartig".')
+      break
+    }
+
+    case 10: {
+      g.push('Station 10: Inserat-Texte generieren.')
+      g.push('KI generiert Titel, Kurzbeschreibung, Volltext, Highlights. Alle direkt editierbar.')
+      g.push('')
+      g.push(`STATUS: KI-Texte ${listing?.expose_html ? '✓ bereits generiert' : '✗ noch nicht generiert'}.`)
+      g.push('')
+      g.push('TITEL-TIPPS: Max 80 Zeichen, ein konkretes Highlight, keine Floskeln. Gut: "Gepflegte 3-Zimmer-Wohnung mit Balkon — 72 m² in Bogenhausen". Schlecht: "Traumwohnung zu verkaufen".')
+      g.push('TEXTE KÖNNEN nach der Generierung manuell bearbeitet werden. Die KI-Überarbeitungen bleiben gespeichert — auch wenn die KI neu generiert wird (separate Felder).')
+      break
+    }
+
+    case 11: {
+      g.push('Station 11: Vorschau & Rechtscheck.')
+      g.push('Letzte Pflicht-Station. Links: Live-Vorschau. Rechts: Checkliste mit Links zu betroffenen Stationen.')
+      g.push('')
+      const issues: string[] = []
+      if (!listing) {
+        issues.push('✗ Kein Objekt erfasst (→ Station 3)')
+      } else {
+        if (!listing.preis) issues.push('✗ Kein Preis gesetzt (→ Station 5)')
+        if (!listing.wohnflaeche_qm) issues.push('✗ Keine Wohnfläche (→ Station 3)')
+        const photos = Array.isArray(listing.fotos) ? (listing.fotos as unknown[]).length : 0
+        if (photos === 0) issues.push('✗ Keine Fotos hochgeladen (→ Station 7)')
+        if (!listing.expose_html) issues.push('✗ Keine Inserat-Texte generiert (→ Station 10)')
+        if (!listing.energieausweis_status || listing.energieausweis_status === 'nachzureichen') {
+          issues.push('⚠ Energieausweis wird nachgereicht — bei Besichtigung vorlegen!')
+        }
+      }
+      if (issues.length > 0) {
+        g.push('OFFENE PUNKTE:')
+        g.push(...issues)
+      } else {
+        g.push('STATUS: ✓ Alle Pflichtfelder ausgefüllt — bereit zur Veröffentlichung!')
+      }
+      g.push('')
+      g.push('PFLICHTANGABEN: Energieausweis-Daten (wenn vorhanden), Provisionsfreiheit explizit angeben, Anbieter-Identifikation (Name + Kontakt).')
+      break
+    }
+
+    case 12:
+      g.push('Station 12: Veröffentlichen.')
+      g.push('Der Nutzer schaltet sein Inserat jetzt live. Das ist der Zielmoment.')
+      g.push('')
+      g.push('NACH DER VERÖFFENTLICHUNG — was kommt als nächstes:')
+      g.push('- Erste Anfragen kommen typischerweise in 24–72h')
+      g.push('- Alle Anfragen im Interessenten-CRM direkt verwalten (Pro/Premium)')
+      g.push('- Reaktionszeit beeinflusst Kaufentscheidung — schnell antworten!')
+      g.push('- Gruppen-Besichtigungen statt Einzeltermine sparen Zeit')
+      g.push('- Energieausweis bei jeder Besichtigung dabei haben')
+      break
+
+    default:
+      g.push(`Station ${stationNum} im Geführten Wizard.`)
+  }
+
+  g.push('')
+  g.push('DEIN VERHALTEN JETZT: Beantworte die direkte Frage. Weise dann proaktiv auf offene Punkte oder wichtige Tipps für DIESE Station hin. Konkret, direkt, ermutigend.')
+
+  return g.join('\n')
 }
 
 function capitalize(s: string) {

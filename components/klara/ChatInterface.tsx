@@ -21,6 +21,26 @@ const CONTEXT_SUGGESTIONS: Record<string, string> = {
   preisrechner: 'Wie verhandle ich beim Immobilienverkauf erfolgreich?',
 }
 
+const WIZARD_STATION_SUGGESTIONS: Record<number, string[]> = {
+  1: ['Was erwartet mich im geführten Wizard?', 'Was ist der wichtigste erste Schritt?', 'Wie lange dauert ein typischer Immobilienverkauf?'],
+  2: ['Warum brauche ich Kontaktdaten im Inserat?', 'Welche Infos werden öffentlich sichtbar?', 'Was sind die Pflichtangaben bei Privatverkäufen?'],
+  3: ['Was gilt als Wohnfläche — Keller, Balkon, Dachboden?', 'Was passiert wenn ich die Straße nicht angeben will?', 'Wie genau muss die Wohnfläche stimmen?'],
+  4: ['Was beeinflusst den Lage-Score meiner Immobilie?', 'Wie stark wirkt sich die Lage auf den Preis aus?', 'Was tun bei einer mittelguten Lage?'],
+  5: ['Was passiert wenn ich zu teuer anbiete?', 'Wie viel Verhandlungspuffer sollte ich einkalkulieren?', 'Wie verhandle ich den Preis mit Interessenten?'],
+  6: ['Welche Strafe droht ohne Energieausweis?', 'Was ist der Unterschied zwischen Verbrauchs- und Bedarfsausweis?', 'Wie schnell und günstig komme ich zu einem Energieausweis?'],
+  7: ['Was macht ein gutes Immobilienfoto aus?', 'Welche Räume muss ich unbedingt fotografieren?', 'Reicht das Smartphone für Fotos?'],
+  8: ['Wozu brauche ich einen Grundriss im Inserat?', 'Wie erstelle ich schnell einen Grundriss ohne Profi?', 'Welches Format soll der Grundriss haben?'],
+  9: ['Was darf ich laut AGG nicht schreiben?', 'Welche Merkmale erhöhen den Preis am meisten?', 'Wie lang sollte die Beschreibung sein?'],
+  10: ['Was macht einen guten Inseratstitel aus?', 'Kann ich den KI-Text noch nachträglich ändern?', 'Wie viele Highlights sollte ich nennen?'],
+  11: ['Welche Pflichtangaben braucht ein Immobilieninserat?', 'Muss ich Provisionsfreiheit explizit angeben?', 'Was passiert rechtlich wenn etwas im Inserat falsch ist?'],
+  12: ['Was sind die nächsten Schritte nach der Veröffentlichung?', 'Wie schnell kommen die ersten Anfragen?', 'Wie reagiere ich am besten auf Interessenten?'],
+}
+
+function getWizardStation(contextOrigin: string): number | null {
+  const m = contextOrigin.match(/wizard:station_(\d+)_/)
+  return m ? parseInt(m[1]) : null
+}
+
 type Props = {
   conversationId?: string
   contextOrigin: string
@@ -31,14 +51,28 @@ type Props = {
 export default function ChatInterface({ conversationId, contextOrigin, variant, prefilledQuestion }: Props) {
   const { messages, loading, streaming, send, error } = useKlaraChat(conversationId)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const hasSentPrefill = useRef(false)
   const isCompact = variant === 'sidebar'
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const extraSuggestion = CONTEXT_SUGGESTIONS[contextOrigin]
-  const allSuggestions = extraSuggestion
+  // Auto-send prefilledQuestion once on mount (wizard proactive briefing)
+  useEffect(() => {
+    if (prefilledQuestion && !hasSentPrefill.current && messages.length === 0 && !loading) {
+      hasSentPrefill.current = true
+      send(prefilledQuestion, contextOrigin)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefilledQuestion, loading])
+
+  const wizardStation = getWizardStation(contextOrigin)
+  const wizardSuggestions = wizardStation ? WIZARD_STATION_SUGGESTIONS[wizardStation] : null
+  const extraSuggestion = wizardSuggestions ? null : CONTEXT_SUGGESTIONS[contextOrigin]
+  const allSuggestions = wizardSuggestions
+    ? wizardSuggestions
+    : extraSuggestion
     ? [extraSuggestion, ...SUGGESTIONS.slice(0, 3)]
     : SUGGESTIONS
 

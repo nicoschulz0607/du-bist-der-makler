@@ -16,6 +16,8 @@ import { redirect } from 'next/navigation'
 import { canAccess, getUpgradeTarget, getUpgradeText, type Tier } from '@/lib/tier'
 import { CHECKLIST } from '@/lib/checklist'
 import FeatureCard from '@/components/dashboard/FeatureCard'
+import OnboardingModal from '@/components/wizard/OnboardingModal'
+import ReentryBanner from '@/components/wizard/ReentryBanner'
 
 function differenceInDays(from: Date, to: Date): number {
   return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
@@ -29,15 +31,21 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  const [profileRes, listingRes, checkRes] = await Promise.all([
-    supabase.from('profiles').select('vorname, paket_tier, created_at').eq('id', user.id).single(),
+  const [profileRes, listingRes, checkRes, wizardRes] = await Promise.all([
+    supabase.from('profiles').select('vorname, paket_tier, created_at, wizard_onboarding_shown, wizard_banner_dismissals').eq('id', user.id).single(),
     supabase.from('listings').select('*').eq('user_id', user.id).order('created_at').limit(1).maybeSingle(),
     supabase.from('checkliste_status').select('aufgabe_id, completed').eq('user_id', user.id),
+    supabase.from('wizard_progress').select('aktuelle_station, abgeschlossen_am').eq('user_id', user.id).maybeSingle(),
   ])
 
   const profile = profileRes.data
   const listing = listingRes.data
   const checkItems = checkRes.data ?? []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const profileRaw = profile as any
+  const wizardProgress = wizardRes.data
+  const showOnboarding = !(profileRaw?.wizard_onboarding_shown ?? true)
+  const bannerDismissals: number = profileRaw?.wizard_banner_dismissals ?? 0
   const tier = profile?.paket_tier as Tier
 
   const totalItems = CHECKLIST.flatMap((p) => p.items).length
@@ -52,6 +60,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-7">
+      <OnboardingModal show={showOnboarding} />
+
+      {wizardProgress && !wizardProgress.abgeschlossen_am && bannerDismissals < 3 && (
+        <ReentryBanner station={wizardProgress.aktuelle_station} totalStations={12} />
+      )}
+
       {/* Status-Banner */}
       {listing?.status === 'aktiv' ? (
         <div className="flex items-center justify-between gap-4 bg-[#E8F5EE] border border-accent rounded-xl px-5 py-4">
