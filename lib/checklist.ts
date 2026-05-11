@@ -4,7 +4,7 @@ export interface ChecklistItem {
   description: string
   actionLabel?: string
   actionHref?: string
-  requiredTier?: 'starter' | 'pro' | 'premium'
+  requiredTier?: 'basic' | 'pro' | 'premium'
 }
 
 export interface ChecklistPhase {
@@ -69,7 +69,7 @@ export const CHECKLIST: ChecklistPhase[] = [
       {
         id: 'inserat_live',
         title: 'Inserat veröffentlicht',
-        description: 'Auf du-bist-der-makler.de + Portalen',
+        description: 'Auf dubistdermakler.de + Portalen',
         actionLabel: 'Inserat aktivieren',
         actionHref: '/dashboard/objekt',
       },

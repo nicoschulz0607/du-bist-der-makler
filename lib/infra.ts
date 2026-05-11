@@ -31,7 +31,7 @@ export async function geocodeAddress(
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'du-bist-der-makler.de/1.0' },
+      headers: { 'User-Agent': 'dubistdermakler.de/1.0' },
       signal: AbortSignal.timeout(5000),
     })
     const data = await res.json()
@@ -57,7 +57,7 @@ async function runOverpassQuery(q: string): Promise<Array<{ lat: number; lon: nu
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json',
-          'User-Agent': 'du-bist-der-makler.de/1.0 (immobilien-listing-tool)',
+          'User-Agent': 'dubistdermakler.de/1.0 (immobilien-listing-tool)',
         },
         signal: AbortSignal.timeout(15000),
       })

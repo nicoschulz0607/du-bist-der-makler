@@ -78,7 +78,7 @@ export default function PartnerPage() {
 
       <div className="bg-surface border border-[#DDDDDD] rounded-xl px-5 py-4">
         <p className="text-[13px] font-medium text-text-secondary">
-          Partner-Links werden in Kürze aktiv geschaltet. Bei Fragen: <a href="mailto:hallo@du-bist-der-makler.de" className="text-accent hover:underline font-semibold">hallo@du-bist-der-makler.de</a>
+          Partner-Links werden in Kürze aktiv geschaltet. Bei Fragen: <a href="mailto:kontakt@dubistdermakler.de" className="text-accent hover:underline font-semibold">kontakt@dubistdermakler.de</a>
         </p>
       </div>
     </div>

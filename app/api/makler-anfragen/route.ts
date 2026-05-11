@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   const vorname = (profile?.vorname as string | null) ?? 'Kunde'
-  const tier = (profile?.paket_tier as string | null) ?? 'starter'
+  const tier = (profile?.paket_tier as string | null) ?? 'basic'
   const adminLink = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/admin/makler-anfragen/${anfrage.id}`
 
   const bestätigung = anfrageBestätigungKunde({ vorname, thema, wunschtermine })

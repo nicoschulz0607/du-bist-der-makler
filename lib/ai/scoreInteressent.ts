@@ -1,10 +1,8 @@
 'use server'
 
-import Anthropic from '@anthropic-ai/sdk'
+import { claudeCreate } from '@/lib/ai/anthropic'
 import { createClient } from '@/lib/supabase/server'
 import { SCORE_SYSTEM_PROMPT, buildScoreUserPrompt } from './prompts/scoreInteressent'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 export interface ScoreResult {
   score: number
@@ -66,12 +64,15 @@ export async function scoreInteressent(interessentId: string): Promise<{ ok: tru
   })
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: SCORE_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt }],
-    })
+    const response = await claudeCreate(
+      {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: SCORE_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }],
+      },
+      { callSite: 'score-interessent', userId: user.id }
+    )
 
     const raw = response.content[0].type === 'text' ? response.content[0].text : ''
     // Strip potential markdown code fences Claude may add despite instructions

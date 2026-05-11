@@ -1,4 +1,4 @@
-# CLAUDE.md — du-bist-der-makler.de
+# CLAUDE.md — dubistdermakler.de
 # Master Prompt für Claude Code
 
 > Dieses Dokument liegt im Repo-Root und wird von Claude Code automatisch
@@ -10,7 +10,7 @@
 
 ## 1. Projekt-Kontext
 
-**du-bist-der-makler.de** ist eine SaaS-Plattform für privaten Immobilienverkauf in Deutschland.
+**dubistdermakler.de** ist eine SaaS-Plattform für privaten Immobilienverkauf in Deutschland.
 
 **Kern-Versprechen:** *Du zahlst einmal. Du verkaufst selbst. Wir begleiten dich dabei.*
 
@@ -374,7 +374,7 @@ Antworte mit exakt diesem JSON:
 
 ```typescript
 // lib/claude/chatbot.ts
-export const CHATBOT_SYSTEM_PROMPT = `Du bist ein hilfreicher Verkaufs-Assistent auf du-bist-der-makler.de.
+export const CHATBOT_SYSTEM_PROMPT = `Du bist ein hilfreicher Verkaufs-Assistent auf dubistdermakler.de.
 Du hilfst privaten Immobilienverkäufern in Deutschland beim Verkaufsprozess.
 
 Du kannst helfen bei: Ablauf des Verkaufs, Energieausweis-Pflicht, Notarkosten,
@@ -662,10 +662,10 @@ REPLICATE_API_TOKEN=
 
 # Resend
 RESEND_API_KEY=
-RESEND_FROM_EMAIL=noreply@du-bist-der-makler.de
+RESEND_FROM_EMAIL=noreply@dubistdermakler.de
 
 # App
-NEXT_PUBLIC_APP_URL=https://du-bist-der-makler.de
+NEXT_PUBLIC_APP_URL=https://dubistdermakler.de
 ```
 
 ---
@@ -731,5 +731,5 @@ NEXT_PUBLIC_APP_URL=https://du-bist-der-makler.de
 
 ---
 
-*CLAUDE.md — du-bist-der-makler.de — April 2026*
+*CLAUDE.md — dubistdermakler.de — April 2026*
 *Nico + Kollege — Vertraulich*

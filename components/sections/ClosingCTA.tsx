@@ -53,10 +53,10 @@ export default function ClosingCTA() {
               </ul>
 
               <a
-                href="#preise"
+                href="/demo"
                 className="inline-flex items-center gap-2 rounded-pill bg-white hover:bg-white/90 text-accent text-[16px] font-bold px-8 py-4 transition-colors duration-150 min-h-[52px] active:scale-[0.98]"
               >
-                Kostenlos starten
+                Demo erkunden
                 <ArrowRight size={18} aria-hidden="true" />
               </a>
             </div>

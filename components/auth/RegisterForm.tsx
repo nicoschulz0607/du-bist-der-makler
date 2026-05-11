@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -46,6 +47,9 @@ const strengthMeta = [
 const inputBase =
   'w-full rounded-[8px] border px-4 min-h-[52px] text-[15px] font-medium text-text-primary bg-white outline-none transition-all duration-200 placeholder:text-text-tertiary focus:ring-2 focus:ring-accent focus:border-transparent'
 
+const TIER_LABELS: Record<string, string> = { basic: 'Basic', pro: 'Pro', premium: 'Premium' }
+const DURATION_LABELS: Record<string, string> = { '1': '1 Monat', '3': '3 Monate', '6': '6 Monate' }
+
 export default function RegisterForm() {
   const [vorname, setVorname] = useState('')
   const [email, setEmail] = useState('')
@@ -55,6 +59,21 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  const searchParams = useSearchParams()
+  const tierParam = searchParams.get('tier')
+  const laufzeitParam = searchParams.get('laufzeit')
+  const addonParam = searchParams.get('addon')
+
+  // Build pass-through href for the login link
+  const loginHref = (() => {
+    const p = new URLSearchParams()
+    if (tierParam) p.set('tier', tierParam)
+    if (laufzeitParam) p.set('laufzeit', laufzeitParam)
+    if (addonParam) p.set('addon', addonParam)
+    const qs = p.toString()
+    return qs ? `/login?${qs}` : '/login'
+  })()
 
   const strength = password ? getPasswordStrength(password) : null
   const meta = strength ? strengthMeta[strength - 1] : null
@@ -74,10 +93,23 @@ export default function RegisterForm() {
 
     setLoading(true)
     const supabase = createClient()
+
+    // Build the emailRedirectTo URL, including pending checkout params
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const redirectParams = new URLSearchParams()
+    if (tierParam) redirectParams.set('tier', tierParam)
+    if (laufzeitParam) redirectParams.set('laufzeit', laufzeitParam)
+    if (addonParam) redirectParams.set('addon', addonParam)
+    const redirectQs = redirectParams.toString()
+    const emailRedirectTo = `${origin}/dashboard${redirectQs ? `?${redirectQs}` : ''}`
+
     const { error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { vorname } },
+      options: {
+        data: { vorname },
+        emailRedirectTo,
+      },
     })
 
     setLoading(false)
@@ -96,6 +128,8 @@ export default function RegisterForm() {
     setSuccess(true)
   }
 
+  const hasPendingCheckout = (tierParam && laufzeitParam) || addonParam
+
   if (success) {
     return (
       <div className="text-center py-8">
@@ -113,10 +147,19 @@ export default function RegisterForm() {
         >
           Fast geschafft!
         </h2>
-        <p className="text-[15px] font-medium text-text-secondary leading-relaxed mb-5">
+        <p className="text-[15px] font-medium text-text-secondary leading-relaxed mb-3">
           Wir haben dir eine Bestätigungs-E-Mail geschickt. Bitte klicke auf
           den Link in der E-Mail, um dein Konto zu aktivieren.
         </p>
+        {hasPendingCheckout && (
+          <p className="text-[14px] font-semibold text-accent leading-relaxed mb-3">
+            Nach der Bestätigung kannst du direkt mit dem Kauf{' '}
+            {tierParam && laufzeitParam
+              ? `des ${TIER_LABELS[tierParam] ?? tierParam}-Pakets (${DURATION_LABELS[laufzeitParam] ?? laufzeitParam})`
+              : 'des Tool-Pakets'}{' '}
+            fortfahren.
+          </p>
+        )}
         <p className="text-[13px] font-medium text-text-tertiary">
           Keine E-Mail erhalten? Prüfe deinen Spam-Ordner.
         </p>
@@ -147,7 +190,7 @@ export default function RegisterForm() {
           <div className="rounded-[8px] bg-[#FEF2F2] border border-error px-4 py-3">
             <p className="text-[14px] font-medium text-error">
               Diese E-Mail ist bereits registriert.{' '}
-              <Link href="/login" className="font-semibold underline">
+              <Link href={loginHref} className="font-semibold underline">
                 Jetzt einloggen
               </Link>
             </p>
@@ -282,14 +325,27 @@ export default function RegisterForm() {
           {loading && <Spinner />}
           {loading ? 'Konto wird erstellt…' : 'Konto erstellen'}
         </button>
-      </form>
 
-      <p className="mt-6 text-center text-[14px] font-medium text-text-secondary">
-        Bereits registriert?{' '}
-        <Link href="/login" className="text-accent font-semibold hover:underline">
-          Einloggen
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-[#DDDDDD]" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-white px-4 text-[14px] font-semibold text-text-secondary">
+              Du hast schon ein Konto?
+            </span>
+          </div>
+        </div>
+
+        {/* Login-Section */}
+        <Link
+          href={loginHref}
+          className="w-full inline-flex items-center justify-center rounded-pill border-2 border-[#1B6B45] text-[#1B6B45] text-[14px] font-semibold px-6 min-h-[44px] hover:bg-[#1B6B45]/5 transition-colors duration-200"
+        >
+          Jetzt einloggen →
         </Link>
-      </p>
+      </form>
     </div>
   )
 }

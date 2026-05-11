@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -40,8 +40,25 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<'generic' | 'email_not_confirmed' | null>(null)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendDone, setResendDone] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const tierParam = searchParams.get('tier')
+  const laufzeitParam = searchParams.get('laufzeit')
+  const addonParam = searchParams.get('addon') as 'toolpaket' | 'maklerstunde' | null
+
+  // Build pass-through href for the register link
+  const registerHref = (() => {
+    const p = new URLSearchParams()
+    if (tierParam) p.set('tier', tierParam)
+    if (laufzeitParam) p.set('laufzeit', laufzeitParam)
+    if (addonParam) p.set('addon', addonParam)
+    const qs = p.toString()
+    return qs ? `/registrieren?${qs}` : '/registrieren'
+  })()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -57,18 +74,64 @@ export default function LoginForm() {
     if (authError) {
       setLoading(false)
       if (authError.message.includes('Email not confirmed')) {
-        setError('Bitte bestätige zuerst deine E-Mail-Adresse.')
+        setError('email_not_confirmed')
       } else {
-        setError('E-Mail oder Passwort falsch.')
+        setError('generic')
       }
       return
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    // After successful login: trigger pending checkout if params are present
+    const validTiers = ['basic', 'pro', 'premium']
+    const validLaufzeiten = [1, 3, 6]
+
+    if (tierParam && laufzeitParam) {
+      const laufzeit = parseInt(laufzeitParam, 10)
+      if (validTiers.includes(tierParam) && validLaufzeiten.includes(laufzeit)) {
+        try {
+          const res = await fetch('/api/stripe/checkout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Confirm-Paketwechsel': 'true',
+            },
+            body: JSON.stringify({ kind: 'paket', tier: tierParam, laufzeit }),
+          })
+          if (res.ok) {
+            const data = await res.json()
+            window.location.href = data.url
+            return
+          }
+        } catch {
+          // fall through to dashboard on network error
+        }
+      }
+    } else if (addonParam && ['toolpaket', 'maklerstunde'].includes(addonParam)) {
+      try {
+        const res = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind: 'addon', addon_type: addonParam }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          window.location.href = data.url
+          return
+        }
+      } catch {
+        // fall through to dashboard on network error
+      }
+    }
 
     router.push('/dashboard')
+  }
+
+  async function handleResend() {
+    setResendLoading(true)
+    const supabase = createClient()
+    await supabase.auth.resend({ type: 'signup', email })
+    setResendLoading(false)
+    setResendDone(true)
   }
 
   return (
@@ -85,9 +148,36 @@ export default function LoginForm() {
 
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         {/* Error banner */}
-        {error && (
+        {error === 'generic' && (
           <div className="rounded-[8px] bg-[#FEF2F2] border border-error px-4 py-3">
-            <p className="text-[14px] font-medium text-error">{error}</p>
+            <p className="text-[14px] font-semibold text-error">
+              Login fehlgeschlagen — bitte E-Mail und Passwort prüfen.
+            </p>
+          </div>
+        )}
+        {error === 'email_not_confirmed' && (
+          <div className="rounded-[8px] bg-[#FEF2F2] border border-error px-4 py-3 space-y-1.5">
+            <p className="text-[14px] font-semibold text-error">
+              Bitte bestätige deine E-Mail.
+            </p>
+            <p className="text-[12px] font-medium text-text-secondary">
+              Den Bestätigungslink findest du in deinem Postfach.{' '}
+              {!resendDone ? (
+                <>
+                  Keine Mail erhalten?{' '}
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendLoading}
+                    className="text-accent hover:underline font-semibold disabled:opacity-70"
+                  >
+                    {resendLoading ? 'Wird gesendet…' : 'Erneut senden'}
+                  </button>
+                </>
+              ) : (
+                'Wir haben dir eine neue E-Mail geschickt.'
+              )}
+            </p>
           </div>
         )}
 
@@ -122,7 +212,7 @@ export default function LoginForm() {
             </label>
             <Link
               href="/passwort-vergessen"
-              className="text-[12px] font-medium text-text-secondary hover:text-accent transition-colors duration-150"
+              className="text-[12px] font-medium text-text-tertiary hover:text-text-secondary transition-colors duration-150"
             >
               Passwort vergessen?
             </Link>
@@ -171,17 +261,27 @@ export default function LoginForm() {
           {loading && <Spinner />}
           {loading ? 'Wird eingeloggt…' : 'Einloggen'}
         </button>
-      </form>
 
-      <p className="mt-6 text-center text-[14px] font-medium text-text-secondary">
-        Noch kein Konto?{' '}
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-[#DDDDDD]" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-white px-4 text-[14px] font-semibold text-text-secondary">
+              Noch kein Konto?
+            </span>
+          </div>
+        </div>
+
+        {/* Register-Section */}
         <Link
-          href="/registrieren"
-          className="text-accent font-semibold hover:underline"
+          href={registerHref}
+          className="w-full inline-flex items-center justify-center rounded-pill border-2 border-[#1B6B45] text-[#1B6B45] text-[14px] font-semibold px-6 min-h-[44px] hover:bg-[#1B6B45]/5 transition-colors duration-200"
         >
-          Jetzt registrieren
+          Jetzt registrieren →
         </Link>
-      </p>
+      </form>
     </div>
   )
 }

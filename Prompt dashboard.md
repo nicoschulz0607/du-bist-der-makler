@@ -1,5 +1,5 @@
 # Claude Code Prompt — Dashboard Grundgerüst
-# du-bist-der-makler.de
+# dubistdermakler.de
 
 Kopiere alles ab hier direkt in Claude Code.
 
@@ -348,7 +348,7 @@ Server Component. Liest aus Supabase:
 - Klick → `/dashboard/objekt`
 
 ### 8d. Portal-Status (nur wenn Listing aktiv)
-- Chips: du-bist-der-makler.de (immer grün wenn aktiv),
+- Chips: dubistdermakler.de (immer grün wenn aktiv),
   ImmoScout24 (grün nur bei Premium + aktiv), eBay Kleinanzeigen (grün nur bei Premium + aktiv)
 
 ### 8e. Feature-Grid (6 Kacheln, 3 Spalten)
@@ -409,7 +409,7 @@ export const CHECKLIST: ChecklistPhase[] = [
     items: [
       { id: 'fotos_hochgeladen', title: 'Mindestens 5 Fotos hochgeladen', description: 'Mehr Fotos = mehr Klicks', actionLabel: 'Fotos verwalten', actionHref: '/dashboard/objekt' },
       { id: 'expose_erstellt', title: 'KI-Exposé generiert', description: 'Professionelles PDF in 20 Sekunden', actionLabel: 'Exposé erstellen', actionHref: '/dashboard/expose', requiredTier: 'pro' },
-      { id: 'inserat_live', title: 'Inserat veröffentlicht', description: 'Auf du-bist-der-makler.de + Portalen', actionLabel: 'Inserat aktivieren', actionHref: '/dashboard/objekt' },
+      { id: 'inserat_live', title: 'Inserat veröffentlicht', description: 'Auf dubistdermakler.de + Portalen', actionLabel: 'Inserat aktivieren', actionHref: '/dashboard/objekt' },
     ]
   },
   {

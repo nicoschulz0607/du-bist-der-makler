@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { claudeCreate } from '@/lib/ai/anthropic'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -15,27 +13,28 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
-      system: `Du bist ein Assistent für Immobilien-Exposés in Deutschland.
+    const response = await claudeCreate(
+      {
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        system: `Du bist ein Assistent für Immobilien-Exposés in Deutschland.
 Analysiere das Foto einer Immobilie und antworte AUSSCHLIESSLICH mit einem JSON-Objekt.
 Kein erklärender Text, keine Markdown-Backticks, nur reines JSON.`,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp',
-                data: imageBase64,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp',
+                  data: imageBase64,
+                },
               },
-            },
-            {
-              type: 'text',
-              text: `Welcher Raumtyp ist auf diesem Immobilienfoto zu sehen?
+              {
+                type: 'text',
+                text: `Welcher Raumtyp ist auf diesem Immobilienfoto zu sehen?
 Antworte nur als JSON (kein Markdown, keine Backticks):
 {
   "raumtyp": "<exakt einer von: Wohnzimmer | Küche | Schlafzimmer | Badezimmer | Gäste-WC | Kinderzimmer | Arbeitszimmer | Esszimmer | Flur | Keller | Dachboden | Garage | Carport | Garten | Terrasse | Balkon | Außenansicht | Grundriss | Sonstiges>",
@@ -48,11 +47,13 @@ Antworte nur als JSON (kein Markdown, keine Backticks):
 Für "merkmale": Liste 1–4 auffällige, verkaufsrelevante Eigenschaften die sichtbar sind (z.B. "Parkett", "große Fenster", "bodenebene Dusche"). Leere Liste [] wenn nichts Besonderes erkennbar.
 Für "zustand": "gut" = gepflegt/modern, "mittel" = normaler Zustand, "schlecht" = renovierungsbedürftig.
 Für "score": Qualitätspunktzahl des Fotos als Vermarktungsmaterial (Helligkeit, Schärfe, Komposition).`,
-            },
-          ],
-        },
-      ],
-    })
+              },
+            ],
+          },
+        ],
+      },
+      { callSite: 'analyze-foto', userId: user.id }
+    )
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim()

@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD) — du-bist-der-makler.de
+# Product Requirements Document (PRD) — dubistdermakler.de
 
 > Version 1.0 · April 2026 · MVP-Phase
 >
@@ -12,7 +12,7 @@
 Private Immobilienverkäufer in Deutschland stehen vor einer schlechten Wahl: teurer Makler (3–6 % Provision) oder Listing-Plattform ohne jede Begleitung. Eine Lösung die professionelle Tools, echte Verkaufsbegleitung und einen fairen Festpreis kombiniert, existiert nicht.
 
 **Lösung**
-du-bist-der-makler.de ist eine SaaS-Plattform für privaten Immobilienverkauf mit KI-Tools, Schritt-für-Schritt-Begleitung und optionalem Makler-Support — für einen einmaligen Festpreis ohne Abo.
+dubistdermakler.de ist eine SaaS-Plattform für privaten Immobilienverkauf mit KI-Tools, Schritt-für-Schritt-Begleitung und optionalem Makler-Support — für einen einmaligen Festpreis ohne Abo.
 
 **Kern-Versprechen**
 > Du zahlst einmal. Du verkaufst selbst. Wir begleiten dich dabei.
@@ -35,7 +35,7 @@ Alle Pakete laufen 6 Monate. Kein Abo. Keine automatische Verlängerung. Einmalr
 
 | Feature | Starter 299 € | Pro 499 € | Premium 699 € |
 |---|---|---|---|
-| Listing auf du-bist-der-makler.de | ✓ | ✓ | ✓ |
+| Listing auf dubistdermakler.de | ✓ | ✓ | ✓ |
 | Schritt-für-Schritt Checkliste | ✓ | ✓ | ✓ |
 | KI-Chatbot 24/7 | ✓ | ✓ | ✓ |
 | Interessenten-Anfragen per E-Mail | ✓ | ✓ | ✓ |
@@ -74,7 +74,7 @@ Alle Pakete laufen 6 Monate. Kein Abo. Keine automatische Verlängerung. Einmalr
 #### LP-01 · Landing Page (Public) · [Starter] · [P0]
 
 **User Story**
-Als potenzieller Käufer besuche ich du-bist-der-makler.de und verstehe sofort was das Produkt ist, was es kostet und warum es besser als die Alternativen ist — und kann mich registrieren oder auf die Waitlist eintragen.
+Als potenzieller Käufer besuche ich dubistdermakler.de und verstehe sofort was das Produkt ist, was es kostet und warum es besser als die Alternativen ist — und kann mich registrieren oder auf die Waitlist eintragen.
 
 **Akzeptanzkriterien**
 - Hero mit Headline, Subline und zwei CTAs (Jetzt starten + Mehr erfahren)
@@ -167,7 +167,7 @@ Als Nutzer kann ich meine Immobilie durch ein strukturiertes Formular erfassen u
 #### LIST-02 · Öffentliche Inserat-Seite · [Starter] · [P0]
 
 **User Story**
-Als Kaufinteressent kann ich ein Inserat auf du-bist-der-makler.de aufrufen und alle relevanten Informationen sowie ein Kontaktformular sehen.
+Als Kaufinteressent kann ich ein Inserat auf dubistdermakler.de aufrufen und alle relevanten Informationen sowie ein Kontaktformular sehen.
 
 **Akzeptanzkriterien**
 - URL-Struktur: `/inserate/[slug]` (slug = ID + Ortsname)
@@ -354,7 +354,7 @@ Als Nutzer aller Pakete sehe ich eine vollständige Checkliste die mich durch al
 #### PART-01 · Energieausweis-Partner · [Starter] · [P1]
 
 **User Story**
-Als Nutzer kann ich direkt über du-bist-der-makler.de einen Energieausweis bestellen — weil er beim Verkauf gesetzlich vorgeschrieben ist.
+Als Nutzer kann ich direkt über dubistdermakler.de einen Energieausweis bestellen — weil er beim Verkauf gesetzlich vorgeschrieben ist.
 
 **Akzeptanzkriterien**
 - Partner-Link im Dashboard und in der Checkliste (Affiliate-Link)
@@ -508,4 +508,4 @@ checkliste_status: id, user_id, aufgabe_id, completed, completed_at
 
 ---
 
-*PRD v1.0 · du-bist-der-makler.de · April 2026 · Vertraulich · Nico + Kollege*
+*PRD v1.0 · dubistdermakler.de · April 2026 · Vertraulich · Nico + Kollege*

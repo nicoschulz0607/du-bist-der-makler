@@ -49,7 +49,7 @@ function baseLayout(content: string): string {
         <tr><td style="padding:32px;">
           ${content}
           <hr style="border:none;border-top:1px solid #EEEEEE;margin:28px 0;">
-          <p style="margin:0;font-size:12px;color:#999999;">du-bist-der-makler.de &nbsp;·&nbsp; Diese E-Mail wurde automatisch generiert.</p>
+          <p style="margin:0;font-size:12px;color:#999999;">dubistdermakler.de &nbsp;·&nbsp; Diese E-Mail wurde automatisch generiert.</p>
         </td></tr>
       </table>
     </td></tr>

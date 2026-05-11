@@ -33,6 +33,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  if (!user && request.nextUrl.pathname.startsWith('/helios')) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', request.nextUrl.pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
   if (
     user &&
     (request.nextUrl.pathname === '/login' ||
@@ -45,5 +51,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/registrieren', '/onboarding'],
+  matcher: ['/dashboard/:path*', '/helios/:path*', '/login', '/registrieren', '/onboarding'],
 }

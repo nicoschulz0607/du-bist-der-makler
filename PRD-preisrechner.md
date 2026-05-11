@@ -1,5 +1,5 @@
 # Feature-Spec: KI-Preisrechner
-**du-bist-der-makler.de · Ergänzung zu PRD.md · April 2026**
+**dubistdermakler.de · Ergänzung zu PRD.md · April 2026**
 
 ---
 
@@ -250,4 +250,4 @@ RLS: User sieht nur eigene Zeilen.
 
 ---
 
-*Spec v1.0 · du-bist-der-makler.de · April 2026*
+*Spec v1.0 · dubistdermakler.de · April 2026*

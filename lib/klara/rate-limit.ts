@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const LIMITS: Record<string, number> = {
-  starter: 30,
+  basic: 30,
   pro: 100,
   premium: 500,
 }
@@ -16,8 +16,8 @@ export async function checkRateLimit(
     .eq('id', userId)
     .single()
 
-  const tier = profile?.paket_tier ?? 'starter'
-  const limit = LIMITS[tier] ?? LIMITS.starter
+  const tier = profile?.paket_tier ?? 'basic'
+  const limit = LIMITS[tier] ?? LIMITS.basic
   const today = new Date().toISOString().split('T')[0]
 
   const { data: usage } = await supabase

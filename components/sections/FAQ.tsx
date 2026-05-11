@@ -32,7 +32,7 @@ const faqs: FAQItem[] = [
   {
     question: 'Welches Paket ist das richtige für mich?',
     answer:
-      'Für den Einstieg empfehlen wir das Pro-Paket: Es enthält den KI-Exposé Generator und den Preisrechner, die erfahrungsgemäß den größten Unterschied bei Verkaufserfolg und -dauer machen. Das Starter-Paket eignet sich, wenn du bereits ein fertiges Exposé hast. Premium lohnt sich, wenn du maximale Reichweite und aktiven Makler-Support willst.',
+      'Für den Einstieg empfehlen wir das Pro-Paket: Es enthält den KI-Exposé Generator und den Preisrechner, die erfahrungsgemäß den größten Unterschied bei Verkaufserfolg und -dauer machen. Das Basic-Paket eignet sich, wenn du bereits ein fertiges Exposé hast. Premium lohnt sich, wenn du maximale Reichweite und aktiven Makler-Support willst.',
   },
 ]
 

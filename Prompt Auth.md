@@ -1,5 +1,5 @@
 # Claude Code Prompt — Auth-Seiten (Login & Registrierung)
-# du-bist-der-makler.de
+# dubistdermakler.de
 
 Kopiere alles ab hier direkt in Claude Code.
 

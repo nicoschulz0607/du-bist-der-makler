@@ -74,7 +74,7 @@ interface ExposePdfProps {
 function Footer({ page, total }: { page: number; total: number }) {
   return (
     <View style={s.footer} fixed>
-      <Text style={s.footerText}>du-bist-der-makler.de · Nicht zur gewerblichen Nutzung</Text>
+      <Text style={s.footerText}>dubistdermakler.de · Nicht zur gewerblichen Nutzung</Text>
       <Text style={s.footerText}>Seite {page} von {total}</Text>
     </View>
   )
@@ -96,11 +96,11 @@ export default function ExposePdf({ listing, expose }: ExposePdfProps) {
     .join(', ')
 
   return (
-    <Document title={expose.titel} author="du-bist-der-makler.de" creator="du-bist-der-makler.de">
+    <Document title={expose.titel} author="dubistdermakler.de" creator="dubistdermakler.de">
       {/* Seite 1: Cover */}
       <Page size="A4" style={s.page}>
         <View style={s.coverHeader}>
-          <Text style={s.coverLogo}>du-bist-der-makler.de</Text>
+          <Text style={s.coverLogo}>dubistdermakler.de</Text>
           <Text style={s.coverTitle}>{expose.titel}</Text>
           <Text style={s.coverTagline}>{expose.tagline}</Text>
         </View>

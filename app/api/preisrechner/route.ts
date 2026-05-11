@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { claudeCreate } from '@/lib/ai/anthropic'
 
 export const maxDuration = 30
 
@@ -17,10 +15,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 600,
-      system: `Du bist ein erfahrener deutscher Immobilienmakler mit 20 Jahren Markterfahrung.
+    const response = await claudeCreate(
+      {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 600,
+        system: `Du bist ein erfahrener deutscher Immobilienmakler mit 20 Jahren Markterfahrung.
 Analysiere die folgende Immobilie und gib eine realistische Marktwert-Einschätzung.
 Antworte ausschließlich als JSON-Objekt, kein Fließtext, keine Erklärungen außerhalb des JSON.
 
@@ -40,13 +39,15 @@ Wichtig:
 - Baujahr, Lage (PLZ/Ort), Zustand und Größe sind die wichtigsten Preistreiber
 - Vermietete Objekte 10–20% niedriger bewerten (Käuferrisiko)
 - Alle Preise in Euro als Ganzzahl`,
-      messages: [
-        {
-          role: 'user',
-          content: `Immobilien-Daten (Analyse-Modus: ${modus}):\n\n${JSON.stringify(eingaben, null, 2)}`,
-        },
-      ],
-    })
+        messages: [
+          {
+            role: 'user',
+            content: `Immobilien-Daten (Analyse-Modus: ${modus}):\n\n${JSON.stringify(eingaben, null, 2)}`,
+          },
+        ],
+      },
+      { callSite: 'preisrechner', userId: user.id, listingId: listingId ?? undefined }
+    )
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim()

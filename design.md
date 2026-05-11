@@ -22,7 +22,7 @@ Fang mit der brain.md an – einfach alles rausschreiben was euch beiden einfäl
 
 Soll ich direkt eine brain.md und eine Wettbewerbsanalyse-Vorlage für euch anlegen? Oder willst du erst die Kernfragen durchdenken die rein sollen?
 
-# 🏠 brain.md — du-bist-der-makler.de
+# 🏠 brain.md — dubistdermakler.de
 
 Letztes Update: April 2026
 Status: Konzeptphase / Pre-Launch
@@ -44,7 +44,7 @@ Eine Plattform für privaten Immobilienverkauf **ohne Makler** – aber mit alle
 |ImmoScout24              |Listing-Abo für Makler  |~600€/Monat (Makler)          |Nicht für Privat optimiert, teuer   |
 |ohne-makler.net          |Listing-Abo             |~299€/Monat oder 499€/3 Monate|Monatliche Kosten, kein Full-Service|
 |Klassischer Makler       |Provision               |3–6% des Kaufpreises          |Sehr teuer, Kontrollverlust         |
-|**du-bist-der-makler.de**|Einmalzahlung + Services|499–599€ für 6 Monate         |–                                   |
+|**dubistdermakler.de**|Einmalzahlung + Services|499–599€ für 6 Monate         |–                                   |
 
 **Unser Vorteil:**
 
@@ -60,7 +60,7 @@ Drei Stufen mit klarem Upsell-Pfad. Günstigster Einstieg deutlich unter Marktbe
 
 |Paket      |Preis|Laufzeit|Kern-Leistung                                                                     |
 |-----------|-----|--------|----------------------------------------------------------------------------------|
-|**Starter**|299€ |6 Monate|Listing auf du-bist-der-makler.de + Checkliste                                    |
+|**Starter**|299€ |6 Monate|Listing auf dubistdermakler.de + Checkliste                                    |
 |**Pro**    |499€ |6 Monate|+ KI-Exposé, Preisrechner, CRM-Lite, Energieausweis-Partner                       |
 |**Premium**|699€ |6 Monate|+ ImmoScout/eBay Kleinanzeigen Listing, KI-Bildverbesserung, Video, Makler-Support|
 
@@ -72,7 +72,7 @@ Upsell-Logik: Starter ist der Türöffner. Die meisten werden upgraden, sobald s
 
 ### Starter (299€)
 
-[ ] Listing auf du-bist-der-makler.de (6 Monate)
+[ ] Listing auf dubistdermakler.de (6 Monate)
 [ ] Step-by-Step Checkliste (Bewertung → Inserat → Besichtigung → Notar)
 [ ] KI-Chatbot 24/7 (häufige Fragen, kein Rechtsrat)
 ### Pro (499€) – alles aus Starter plus:
@@ -99,7 +99,7 @@ Upsell-Logik: Starter ist der Türöffner. Die meisten werden upgraden, sobald s
 
 ### Phase 1 – MVP (Monat 1–3)
 
-Domain: du-bist-der-makler.de (bereits vorhanden)
+Domain: dubistdermakler.de (bereits vorhanden)
 Landing Page mit Waitlist / Early Access
 Erstes Paket testen mit echten Verkäufern (ggf. Freunde/Familie)
 Makler-Partner als Backup-Support (Kollege von Nico)
@@ -135,7 +135,7 @@ Affiliate-Netzwerk ausbauen
 **Frontend:** Next.js + Tailwind + GSAP
 **Backend/DB:** Supabase (Auth, Listings, Dateispeicherung, CRM-Daten)
 **Email:** Resend
-**Hosting:** Vercel (erstmal Test-Domain, später du-bist-der-makler.de)
+**Hosting:** Vercel (erstmal Test-Domain, später dubistdermakler.de)
 **Automatisierung:** Make / N8N
 **KI-Features:** Claude API (Exposé-Generator, Chatbot, Preisrechner)
 **Payment:** Stripe (Einmalzahlung + optionale Add-ons)
@@ -387,7 +387,7 @@ Komponenten: 20px Border-Radius, 3-Layer-Shadow, großzügiges vertikales Spacin
 Philosophie: Warm, fotografiegetrieben, "Travel Magazine"-Tempo
 Bevor ich das DESIGN.md für dich erstelle — eine kurze Frage zur Farbe, weil das der einzige echte Entscheidungspunkt ist:
 
-F: Welche Akzentfarbe soll du-bist-der-makler.de bekommen? (ersetzt das Airbnb-Rot 
+F: Welche Akzentfarbe soll dubistdermakler.de bekommen? (ersetzt das Airbnb-Rot 
 #ff385c)
 A: Ohne Makler hat ja das Blau als müssen wir ausweichen oder?
 
@@ -594,7 +594,7 @@ Schritt 2: Claude Code starten und diesen Prompt schicken:
 
 Lies zuerst DESIGN.md und brain.md im Root dieses Projekts.
 
-Baue dann die Landingpage (/) für du-bist-der-makler.de in Next.js mit Tailwind.
+Baue dann die Landingpage (/) für dubistdermakler.de in Next.js mit Tailwind.
 
 Die Seite braucht folgende Sektionen in dieser Reihenfolge:
 1. Hero — Headline, Subline, zwei CTAs
@@ -688,18 +688,18 @@ Claude ist eine KI und kann Fehler machen. Bitte überprüfe die Antworten.
 Design · MD
 Kopieren
 
-# DESIGN.md — du-bist-der-makler.de
+# DESIGN.md — dubistdermakler.de
  
 > Drop this file into your project root. Reference it in your prompt to Cursor, Claude Code, or any AI agent:
 > _"Refer to DESIGN.md for all UI decisions."_
 >
-> Based on the Airbnb design language (awesome-design-md/airbnb) — same structure, spacing, typography, and component logic. Brand colors replaced with du-bist-der-makler.de identity.
+> Based on the Airbnb design language (awesome-design-md/airbnb) — same structure, spacing, typography, and component logic. Brand colors replaced with dubistdermakler.de identity.
  
 ---
  
 ## 1. Design Philosophy
  
-du-bist-der-makler.de feels like a **trusted advisor, not a portal**. The UI is warm, airy, and confident — like a well-designed real estate magazine that also happens to be a SaaS tool. Every screen communicates: _"You're in control, and you're not alone."_
+dubistdermakler.de feels like a **trusted advisor, not a portal**. The UI is warm, airy, and confident — like a well-designed real estate magazine that also happens to be a SaaS tool. Every screen communicates: _"You're in control, and you're not alone."_
  
 **Core principles:**
 - **White canvas, one accent.** #ffffff base. `--accent` (#1B6B45) is the only color that does work. Everything else is neutral.
@@ -1504,7 +1504,7 @@ Padding 10px 14px, border-radius 8px, background #E8F5EE, color #1B6B45, font 15
  
 ---
  
-*DESIGN.md — du-bist-der-makler.de — April 2026*
+*DESIGN.md — dubistdermakler.de — April 2026*
 *Based on awesome-design-md/airbnb by VoltAgent (github.com/VoltAgent/awesome-design-md)*
 *Custom brand adaptation: accent #1B6B45 replacing Airbnb Rausch Red #ff385c*
  

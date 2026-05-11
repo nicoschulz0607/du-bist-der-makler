@@ -26,7 +26,7 @@ export default function EinstellungenPage() {
   const [vorname, setVorname] = useState('')
   const [email, setEmail] = useState('')
   const [tier, setTier] = useState<Tier>(null)
-  const [createdAt, setCreatedAt] = useState<string | null>(null)
+  const [paketAktivBis, setPaketAktivBis] = useState<string | null>(null)
 
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -47,14 +47,14 @@ export default function EinstellungenPage() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('vorname, paket_tier, created_at')
+        .select('vorname, paket_tier, paket_aktiv_bis')
         .eq('id', user.id)
         .single()
 
       if (profile) {
         setVorname(profile.vorname ?? '')
         setTier(profile.paket_tier as Tier)
-        setCreatedAt(profile.created_at)
+        setPaketAktivBis((profile as any).paket_aktiv_bis ?? null)
       }
     }
     load()
@@ -116,9 +116,7 @@ export default function EinstellungenPage() {
     router.push('/login')
   }
 
-  const expiresAt = createdAt
-    ? new Date(new Date(createdAt).getTime() + 180 * 24 * 60 * 60 * 1000)
-    : null
+  const expiresAt = paketAktivBis ? new Date(paketAktivBis) : null
 
   return (
     <div className="space-y-6 max-w-xl">
@@ -224,25 +222,29 @@ export default function EinstellungenPage() {
       {/* Paket & Laufzeit */}
       <div className="bg-white border border-[#DDDDDD] rounded-xl p-6">
         <h2 className="text-[15px] font-bold text-text-primary mb-4">Dein Paket</h2>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[15px] font-semibold text-text-primary">{getTierLabel(tier)}-Paket</p>
-            {expiresAt && (
-              <p className="text-[13px] text-text-secondary mt-0.5">
-                Läuft ab am {expiresAt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-              </p>
-            )}
+        {tier ? (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[15px] font-semibold text-text-primary">{getTierLabel(tier)}-Paket</p>
+              {expiresAt && (
+                <p className="text-[13px] text-text-secondary mt-0.5">
+                  Läuft ab am {expiresAt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                </p>
+              )}
+            </div>
+            <span className={`text-[12px] font-semibold px-2.5 py-1 rounded-full ${
+              tier === 'premium'
+                ? 'bg-amber-100 text-amber-700'
+                : tier === 'pro'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-accent-light text-accent'
+            }`}>
+              {getTierLabel(tier)}
+            </span>
           </div>
-          <span className={`text-[12px] font-semibold px-2.5 py-1 rounded-full ${
-            tier === 'premium'
-              ? 'bg-amber-100 text-amber-700'
-              : tier === 'pro'
-              ? 'bg-purple-100 text-purple-700'
-              : 'bg-accent-light text-accent'
-          }`}>
-            {getTierLabel(tier)}
-          </span>
-        </div>
+        ) : (
+          <p className="text-[14px] text-text-secondary">Kein aktives Paket. <a href="/#preise" className="text-accent font-medium hover:underline">Paket wählen →</a></p>
+        )}
       </div>
 
       {/* Konto-Aktionen */}
@@ -257,7 +259,7 @@ export default function EinstellungenPage() {
         </button>
         <p className="text-[12px] text-text-tertiary text-center">
           Konto löschen?{' '}
-          <a href="mailto:hallo@du-bist-der-makler.de" className="text-accent hover:underline font-medium">
+          <a href="mailto:kontakt@dubistdermakler.de" className="text-accent hover:underline font-medium">
             Kontaktiere uns
           </a>
         </p>

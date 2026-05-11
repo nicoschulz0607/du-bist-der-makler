@@ -1,12 +1,12 @@
-# Plattform-Wissen: du-bist-der-makler.de
+# Plattform-Wissen: dubistdermakler.de
 
 ## Pakete & Preise
 
 Alle Pakete laufen **6 Monate**. Kein Abo. Keine automatische Verlängerung. Einmalige Zahlung.
 
-| Feature | Starter 299 € | Pro 499 € | Premium 699 € |
+| Feature | Basic 299 € | Pro 499 € | Premium 699 € |
 |---|---|---|---|
-| Listing auf du-bist-der-makler.de | ✓ | ✓ | ✓ |
+| Listing auf dubistdermakler.de | ✓ | ✓ | ✓ |
 | Schritt-für-Schritt Checkliste | ✓ | ✓ | ✓ |
 | KI-Chatbot 24/7 (Klara) | ✓ | ✓ | ✓ |
 | Interessenten-Anfragen per E-Mail | ✓ | ✓ | ✓ |
@@ -28,14 +28,14 @@ Alle Pakete laufen **6 Monate**. Kein Abo. Keine automatische Verlängerung. Ein
 
 ## Upgrade & Wechsel
 
-- Upgrade auf ein höheres Paket ist möglich per E-Mail an: **support@du-bist-der-makler.de**
+- Upgrade auf ein höheres Paket ist möglich per E-Mail an: **kontakt@dubistdermakler.de**
 - Kein Self-Service-Upgrade im Dashboard (kommt später).
 - Preis beim Upgrade: Differenz zwischen den Paketen.
 
 ## Add-on: Makler-Stunde
 
 - Preis: **50 €/h** (einmalig buchbar)
-- Buchbar für alle Pakete (Starter, Pro, Premium)
+- Buchbar für alle Pakete (Basic, Pro, Premium)
 - Premium-Kunden haben **1 Stunde inklusive**
 - Inhalt: Direktes Gespräch mit einem echten Makler für komplexe Fragen (Preisverhandlung, schwierige Käufer, rechtliche Einschätzung durch Makler — kein Rechtsrat)
 - Buchung: über das Dashboard unter „Support"
@@ -90,7 +90,7 @@ Ja. Beim Verkauf ist der Energieausweis Pflicht laut GEG. Er muss Kaufinteressen
 Das Inserat läuft aus. Du kannst das Paket erneut buchen oder auf ein höheres Paket upgraden.
 
 **Kann ich das Paket kündigen und eine Rückerstattung erhalten?**
-Das Paket ist eine Einmalzahlung für 6 Monate. Für Details zur Erstattungspolitik bitte an support@du-bist-der-makler.de wenden.
+Das Paket ist eine Einmalzahlung für 6 Monate. Für Details zur Erstattungspolitik bitte an kontakt@dubistdermakler.de wenden.
 
 **Warum kein Makler?**
 Ein klassischer Makler kostet 3–6% des Kaufpreises — bei einem 400.000 € Haus sind das 12.000–24.000 € Provision. Mit uns zahlst du einmalig 299–699 € und behältst die volle Kontrolle.
@@ -98,8 +98,8 @@ Ein klassischer Makler kostet 3–6% des Kaufpreises — bei einem 400.000 € H
 **Kommt mein Inserat auch auf ImmoScout?**
 Ja, aber nur im **Premium**-Paket (699 €). Wir inserieren es dann manuell unter unserem Makler-Account. Du brauchst selbst keinen ImmoScout-Account.
 
-**Was ist der Unterschied zwischen Starter und Pro?**
-Starter gibt dir das Inserat + Checkliste + Klara-Chat. Pro fügt den KI-Exposé-Generator, den Preisrechner und das CRM-Lite (Interessenten verwalten, Termine planen) dazu.
+**Was ist der Unterschied zwischen Basic und Pro?**
+Basic gibt dir das Inserat + Checkliste + Klara-Chat. Pro fügt den KI-Exposé-Generator, den Preisrechner und das CRM-Lite (Interessenten verwalten, Termine planen) dazu.
 
 **Kann ich die Fotos selbst hochladen?**
 Ja. Du kannst bis zu 30 Fotos hochladen (JPEG/PNG, max. 10 MB pro Foto). Im Premium-Paket können Fotos zusätzlich mit KI aufgewertet werden.
@@ -108,4 +108,4 @@ Ja. Du kannst bis zu 30 Fotos hochladen (JPEG/PNG, max. 10 MB pro Foto). Im Prem
 Deine Daten werden auf Supabase (EU-Server) gespeichert. Das Inserat ist öffentlich sichtbar (so wie auf allen anderen Immobilienportalen). Kontaktanfragen von Interessenten werden per E-Mail weitergeleitet.
 
 **Wie wende ich mich an den Support?**
-Per E-Mail an support@du-bist-der-makler.de. Für Premium-Kunden und Nutzer der Makler-Stunde gibt es einen direkten Draht zu unserem Makler-Partner.
+Per E-Mail an kontakt@dubistdermakler.de. Für Premium-Kunden und Nutzer der Makler-Stunde gibt es einen direkten Draht zu unserem Makler-Partner.

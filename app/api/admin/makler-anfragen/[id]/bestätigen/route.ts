@@ -51,7 +51,7 @@ export async function POST(
     check_user_id: anfrage.user_id,
   })
 
-  const tier = (profile?.paket_tier as string | null) ?? 'starter'
+  const tier = (profile?.paket_tier as string | null) ?? 'basic'
   const isPremium = tier === 'premium'
   const inklusiv = isPremium && !inklusivGenutzt
 
@@ -80,11 +80,11 @@ export async function POST(
     method: 'REQUEST',
     dtstart: start,
     dtend: end,
-    summary: 'Makler-Beratung — du-bist-der-makler.de',
+    summary: 'Makler-Beratung — dubistdermakler.de',
     description: `Thema: ${anfrage.thema}\n\n${anfrage.beschreibung}`,
     location: 'Telefonisch',
     organizerName: 'Makler-Team',
-    organizerEmail: 'support@du-bist-der-makler.de',
+    organizerEmail: 'kontakt@dubistdermakler.de',
     attendeeName: (profile?.vorname as string | null) ?? 'Kunde',
     attendeeEmail: kundeEmail,
   })

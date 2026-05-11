@@ -19,6 +19,7 @@ import {
   Lock,
   ChevronRight,
   Compass,
+  Image as ImageIcon,
 } from 'lucide-react'
 import { canAccess, getTierLabel, type Tier } from '@/lib/tier'
 import { createClient } from '@/lib/supabase/client'
@@ -68,6 +69,7 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
         { label: 'KI-Exposé PDF', href: '/dashboard/expose-pdf', icon: <FileText size={16} strokeWidth={1.75} />, requiredTier: 'pro', badge: 'Pro' },
         { label: 'Preisrechner', href: '/dashboard/preisrechner', icon: <TrendingUp size={16} strokeWidth={1.75} />, requiredTier: 'pro', badge: 'Pro' },
         { label: 'Klara KI-Assistentin', href: '/dashboard/klara', icon: <Sparkles size={16} strokeWidth={1.75} /> },
+        { label: 'KI-Bildtools', href: '/dashboard/bildtools', icon: <ImageIcon size={16} strokeWidth={1.75} />, requiredTier: 'premium', badge: 'Premium' },
       ],
     },
     {
@@ -161,9 +163,11 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
                 ? 'bg-amber-100 text-amber-700'
                 : tier === 'pro'
                 ? 'bg-purple-100 text-purple-700'
-                : 'bg-accent-light text-accent'
+                : tier === 'basic'
+                ? 'bg-accent-light text-accent'
+                : 'bg-[#EEEEEE] text-text-secondary'
             }`}>
-              {tierLabel}
+              {tier ? tierLabel : 'Inaktiv'}
             </span>
           </div>
         </div>

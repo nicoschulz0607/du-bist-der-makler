@@ -2,7 +2,7 @@
 
 ## Kontext
 
-Du arbeitest am Repo von **du-bist-der-makler.de** — einer Plattform für privaten Immobilienverkauf. Im Dashboard existieren bereits funktionierende Bereiche (Mein Objekt, KI-Exposé, KI-Preisrechner, KI-Bildverbesserung). Diese sind dein Vorbild für Code-Style, Komponenten-Patterns, Server-Actions, Supabase-Queries und Design.
+Du arbeitest am Repo von **dubistdermakler.de** — einer Plattform für privaten Immobilienverkauf. Im Dashboard existieren bereits funktionierende Bereiche (Mein Objekt, KI-Exposé, KI-Preisrechner, KI-Bildverbesserung). Diese sind dein Vorbild für Code-Style, Komponenten-Patterns, Server-Actions, Supabase-Queries und Design.
 
 Zwei Bereiche im Dashboard sind aktuell nur Stubs ("Feature in Entwicklung") und sollen jetzt vollständig gebaut werden:
 

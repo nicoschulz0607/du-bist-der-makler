@@ -18,12 +18,26 @@ import { CHECKLIST } from '@/lib/checklist'
 import FeatureCard from '@/components/dashboard/FeatureCard'
 import OnboardingModal from '@/components/wizard/OnboardingModal'
 import ReentryBanner from '@/components/wizard/ReentryBanner'
+import StripeDevTest from '@/components/dashboard/StripeDevTest'
+import PendingPaketBanner from '@/components/dashboard/PendingPaketBanner'
+import type { Tier as StripeTier, Laufzeit } from '@/lib/stripe-config'
 
 function differenceInDays(from: Date, to: Date): number {
   return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const params = await searchParams
+  const pendingTier = ['basic', 'pro', 'premium'].includes(String(params.tier))
+    ? (params.tier as StripeTier)
+    : null
+  const pendingLaufzeit = [1, 3, 6].includes(Number(params.laufzeit))
+    ? (Number(params.laufzeit) as Laufzeit)
+    : null
   const supabase = await createClient()
   const {
     data: { user },
@@ -32,7 +46,7 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   const [profileRes, listingRes, checkRes, wizardRes] = await Promise.all([
-    supabase.from('profiles').select('vorname, paket_tier, created_at, wizard_onboarding_shown, wizard_banner_dismissals').eq('id', user.id).single(),
+    supabase.from('profiles').select('vorname, paket_tier, paket_aktiv_bis, paket_aktiviert_am, paket_laufzeit_monate, created_at, wizard_onboarding_shown, wizard_banner_dismissals').eq('id', user.id).single(),
     supabase.from('listings').select('*').eq('user_id', user.id).order('created_at').limit(1).maybeSingle(),
     supabase.from('checkliste_status').select('aufgabe_id, completed').eq('user_id', user.id),
     supabase.from('wizard_progress').select('aktuelle_station, abgeschlossen_am').eq('user_id', user.id).maybeSingle(),
@@ -51,9 +65,10 @@ export default async function DashboardPage() {
   const totalItems = CHECKLIST.flatMap((p) => p.items).length
   const completedCount = checkItems.filter((i) => i.completed).length
 
-  const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date()
-  const expiresAt = new Date(createdAt.getTime() + 180 * 24 * 60 * 60 * 1000)
-  const daysLeft = differenceInDays(new Date(), expiresAt)
+  const aktivBis = profileRaw?.paket_aktiv_bis ? new Date(profileRaw.paket_aktiv_bis as string) : null
+  const aktiviertAm = profileRaw?.paket_aktiviert_am ? new Date(profileRaw.paket_aktiviert_am as string) : null
+  const daysLeft = aktivBis ? Math.max(0, differenceInDays(new Date(), aktivBis)) : 0
+  const totalDays = aktivBis && aktiviertAm ? differenceInDays(aktiviertAm, aktivBis) : null
 
   const upgradeInfo = getUpgradeText(tier)
   const upgradeTarget = getUpgradeTarget(tier)
@@ -64,6 +79,11 @@ export default async function DashboardPage() {
 
       {wizardProgress && !wizardProgress.abgeschlossen_am && bannerDismissals < 3 && (
         <ReentryBanner station={wizardProgress.aktuelle_station} totalStations={12} />
+      )}
+
+      {/* Pending-Paket-Banner: nach E-Mail-Bestätigung mit Checkout-Intent */}
+      {pendingTier && pendingLaufzeit && !tier && (
+        <PendingPaketBanner tier={pendingTier} laufzeit={pendingLaufzeit} />
       )}
 
       {/* Status-Banner */}
@@ -135,10 +155,21 @@ export default async function DashboardPage() {
         </div>
         <div className="bg-surface rounded-xl p-5">
           <p className="text-[12px] font-semibold text-text-secondary uppercase tracking-wider mb-1">Verbleibende Tage</p>
-          <p className={`text-[28px] font-bold ${daysLeft < 30 ? 'text-[#C07000]' : 'text-text-primary'}`} style={{ letterSpacing: '-0.28px' }}>
-            {daysLeft > 0 ? daysLeft : 0}
-          </p>
-          <p className="text-[12px] text-text-tertiary mt-0.5">von 180 Tagen Laufzeit</p>
+          {tier ? (
+            <>
+              <p className={`text-[28px] font-bold ${daysLeft < 30 ? 'text-[#C07000]' : 'text-text-primary'}`} style={{ letterSpacing: '-0.28px' }}>
+                {daysLeft}
+              </p>
+              <p className="text-[12px] text-text-tertiary mt-0.5">
+                {totalDays ? `von ${totalDays} Tagen Laufzeit` : 'Tage verbleibend'}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[28px] font-bold text-text-tertiary" style={{ letterSpacing: '-0.28px' }}>—</p>
+              <p className="text-[12px] text-text-tertiary mt-0.5">Kein Paket aktiv</p>
+            </>
+          )}
         </div>
       </div>
 
@@ -201,7 +232,7 @@ export default async function DashboardPage() {
           <h2 className="text-[17px] font-bold text-text-primary mb-3" style={{ letterSpacing: '-0.18px' }}>Portal-Status</h2>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: 'du-bist-der-makler.de', active: true },
+              { label: 'dubistdermakler.de', active: true },
               { label: 'ImmoScout24', active: canAccess(tier, 'premium') },
               { label: 'eBay Kleinanzeigen', active: canAccess(tier, 'premium') },
             ].map(({ label, active }) => (
@@ -231,7 +262,7 @@ export default async function DashboardPage() {
             title="Schritt-für-Schritt"
             description="Geführte Checkliste durch alle Phasen des Verkaufs."
             href="/dashboard/schritte"
-            requiredTier="starter"
+            requiredTier="basic"
             currentTier={tier}
           />
           <FeatureCard
@@ -240,7 +271,7 @@ export default async function DashboardPage() {
             title="KI-Chatbot 24/7"
             description="Antworten auf alle Fragen rund um den Immobilienverkauf."
             href="/dashboard/chatbot"
-            requiredTier="starter"
+            requiredTier="basic"
             currentTier={tier}
           />
           <FeatureCard
@@ -301,6 +332,8 @@ export default async function DashboardPage() {
           </Link>
         </div>
       )}
+
+      {process.env.NODE_ENV === 'development' && <StripeDevTest />}
     </div>
   )
 }

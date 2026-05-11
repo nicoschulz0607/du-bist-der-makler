@@ -29,10 +29,10 @@ export function buildIcal(params: IcalEventParams): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//du-bist-der-makler.de//CRM//DE',
+    'PRODID:-//dubistdermakler.de//CRM//DE',
     `METHOD:${params.method}`,
     'BEGIN:VEVENT',
-    `UID:${params.uid}@du-bist-der-makler.de`,
+    `UID:${params.uid}@dubistdermakler.de`,
     `DTSTAMP:${dtstamp}`,
     `DTSTART:${dtstart}`,
     `DTEND:${dtend}`,

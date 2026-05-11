@@ -7,7 +7,7 @@
 
 ## ROLLE & KONTEXT
 
-Du implementierst **Klara**, den KI-Verkaufsassistenten der Plattform du-bist-der-makler.de. Die vollständige technische Spezifikation liegt in `AI-ASSISTANT.md` im Repo-Root. Halte dich strikt daran. Für UI-Entscheidungen ist `DESIGN.md` maßgeblich, für Feature-Logik `PRD.md`.
+Du implementierst **Klara**, den KI-Verkaufsassistenten der Plattform dubistdermakler.de. Die vollständige technische Spezifikation liegt in `AI-ASSISTANT.md` im Repo-Root. Halte dich strikt daran. Für UI-Entscheidungen ist `DESIGN.md` maßgeblich, für Feature-Logik `PRD.md`.
 
 **Tech-Stack ist fix:** Next.js (App Router), TypeScript, Tailwind, Supabase (Auth + Postgres + RLS), Anthropic SDK, Vercel Edge Runtime. Nicht abweichen, keine zusätzlichen Libraries vorschlagen, keine Alternativen "weil moderner" einbringen.
 
@@ -49,7 +49,7 @@ Erstelle in dieser Reihenfolge:
 **2.2 `lib/klara/knowledge.md`** — Plattform-Wissensbasis. Inhalte:
 - Pakete & Preise (Starter 299€, Pro 499€, Premium 699€) mit Feature-Tabelle aus PRD Abschnitt 2
 - Laufzeit-Logik (6 Monate, kein Abo, keine Verlängerung)
-- Upgrade-Prozess (per E-Mail an support@du-bist-der-makler.de)
+- Upgrade-Prozess (per E-Mail an kontakt@dubistdermakler.de)
 - Add-ons (Makler-Stunde 50€/h, Premium hat 1h inklusive)
 - Energieausweis (Pflicht, Partner-Link, ca. 79€)
 - Was Klara nicht kann (keine Aktionen ausführen, keine Termine eintragen)

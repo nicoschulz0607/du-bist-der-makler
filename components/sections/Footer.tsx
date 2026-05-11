@@ -1,15 +1,15 @@
 const footerLinks = {
   Produkt: [
-    { label: 'Basic – 399 €', href: '#preise' },
-    { label: 'Pro – 599 €', href: '#preise' },
-    { label: 'Premium – 799 €', href: '#preise' },
+    { label: 'Basic – ab 129 €', href: '#preise' },
+    { label: 'Pro – ab 169 €', href: '#preise' },
+    { label: 'Premium – ab 219 €', href: '#preise' },
     { label: 'Alle Features', href: '#features' },
   ],
   Hilfe: [
     { label: 'So funktioniert\'s', href: '#wie-es-funktioniert' },
     { label: 'FAQ', href: '#faq' },
     { label: 'Makler-Stunde buchen', href: '#registrieren' },
-    { label: 'Kontakt', href: 'mailto:hallo@du-bist-der-makler.de' },
+    { label: 'Kontakt', href: 'mailto:kontakt@dubistdermakler.de' },
   ],
   Rechtliches: [
     { label: 'Impressum', href: '/impressum' },
@@ -67,7 +67,7 @@ export default function Footer() {
       <div className="border-t border-[#DDDDDD]">
         <div className="container-landing py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[12px] font-medium text-text-secondary">
-            © 2026 du-bist-der-makler.de — Alle Rechte vorbehalten
+            © 2026 dubistdermakler.de — Alle Rechte vorbehalten
           </p>
           <p className="text-[12px] font-medium text-text-secondary">
             Gebaut in Deutschland 🇩🇪

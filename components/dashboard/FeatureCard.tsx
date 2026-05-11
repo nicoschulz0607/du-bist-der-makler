@@ -8,7 +8,7 @@ interface FeatureCardProps {
   title: string
   description: string
   href: string
-  requiredTier: 'starter' | 'pro' | 'premium'
+  requiredTier: 'basic' | 'pro' | 'premium'
   currentTier: Tier
   badge?: string
 }

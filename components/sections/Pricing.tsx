@@ -2,9 +2,12 @@
 
 import { useState } from 'react'
 import { Check, Layers, ArrowRight, Minus, Sparkles } from 'lucide-react'
+import PaketWechselDialog from '@/components/PaketWechselDialog'
+import DowngradeDialog from '@/components/DowngradeDialog'
 
 // ─── Types & Preise (aus brain.md) ───────────────────────────────────────────
 type Duration = 1 | 3 | 6
+type Tier = 'basic' | 'pro' | 'premium'
 
 const DURATION_LABELS: Record<Duration, string> = {
   1: '1 Monat',
@@ -18,8 +21,6 @@ const PRICING = {
   premium: { 1: 219, 3: 519, 6: 869 },
 } as const
 
-type Tier = keyof typeof PRICING
-
 function savings(tier: Tier, d: Duration): number | null {
   if (d === 1) return null
   return PRICING[tier][1] * d - PRICING[tier][d]
@@ -27,6 +28,16 @@ function savings(tier: Tier, d: Duration): number | null {
 
 function monthly(tier: Tier, d: Duration): number {
   return Math.round(PRICING[tier][d] / d)
+}
+
+// ─── Spinner ──────────────────────────────────────────────────────────────────
+function Spinner() {
+  return (
+    <svg className="animate-spin h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  )
 }
 
 // ─── Pakete ───────────────────────────────────────────────────────────────────
@@ -124,12 +135,158 @@ function CellValue({ value, isUs }: { value: string; isUs?: boolean }) {
   )
 }
 
+// ─── Dialog-State ─────────────────────────────────────────────────────────────
+interface WechselDialogState {
+  aktuelles_paket: {
+    tier: string
+    laufzeit_monate: number
+    ende_datum: string
+    preis: number
+    verbleibende_tage: number
+    gesamt_tage: number
+    restwert: number
+  }
+  neues_paket: {
+    tier: Tier
+    laufzeit_monate: Duration
+    preis: number
+  }
+  aufpreis: number
+}
+
+interface DowngradeDialogState {
+  grund: 'downgrade_tier' | 'downgrade_laufzeit' | 'identisch'
+  aktuelles_paket: { tier: string; laufzeit_monate: number; ende_datum: string }
+  neues_paket: { tier: Tier; laufzeit: Duration }
+}
+
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 export default function Pricing() {
   const [duration, setDuration] = useState<Duration>(3)
+  const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [dialogState, setDialogState] = useState<WechselDialogState | null>(null)
+  const [downgradeDialogState, setDowngradeDialogState] = useState<DowngradeDialogState | null>(null)
+
+  async function handleCheckout(tier: Tier, laufzeit: Duration) {
+    setLoading(`${tier}-${laufzeit}`)
+    setError(null)
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'paket', tier, laufzeit }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        window.location.href = data.url
+        return
+      }
+      if (res.status === 401) {
+        window.location.href = `/login?tier=${tier}&laufzeit=${laufzeit}`
+        return
+      }
+      if (res.status === 403) {
+        const data = await res.json()
+        setDowngradeDialogState({
+          grund: data.grund,
+          aktuelles_paket: data.aktuelles_paket,
+          neues_paket: { tier, laufzeit },
+        })
+        return
+      }
+      if (res.status === 409) {
+        const data = await res.json()
+        setDialogState({
+          aktuelles_paket: data.aktuelles_paket,
+          neues_paket: data.neues_paket,
+          aufpreis: data.aufpreis,
+        })
+        return
+      }
+      setError('Etwas ist schiefgelaufen, bitte versuche es erneut.')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  async function handleAddonCheckout(addon_type: 'toolpaket' | 'maklerstunde') {
+    setLoading(addon_type)
+    setError(null)
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'addon', addon_type }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        window.location.href = data.url
+        return
+      }
+      if (res.status === 401) {
+        window.location.href = `/login?addon=${addon_type}`
+        return
+      }
+      setError('Etwas ist schiefgelaufen, bitte versuche es erneut.')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  async function handleCheckoutConfirmed() {
+    if (!dialogState) return
+    const tier = dialogState.neues_paket.tier
+    const laufzeit = dialogState.neues_paket.laufzeit_monate
+    setDialogState(null)
+    setLoading(`${tier}-${laufzeit}`)
+    setError(null)
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Confirm-Paketwechsel': 'true',
+        },
+        body: JSON.stringify({ kind: 'paket', tier, laufzeit }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        window.location.href = data.url
+        return
+      }
+      setError('Etwas ist schiefgelaufen, bitte versuche es erneut.')
+    } finally {
+      setLoading(null)
+    }
+  }
 
   return (
     <>
+      {/* Wechsel-Dialog (409) */}
+      {dialogState && (
+        <PaketWechselDialog
+          open={true}
+          onClose={() => setDialogState(null)}
+          onConfirm={handleCheckoutConfirmed}
+          aktuelles_paket={dialogState.aktuelles_paket}
+          neues_paket={dialogState.neues_paket}
+          restwert={dialogState.aktuelles_paket.restwert}
+          aufpreis={dialogState.aufpreis}
+        />
+      )}
+
+      {/* Downgrade-Dialog (403) */}
+      {downgradeDialogState && (
+        <DowngradeDialog
+          open={true}
+          onClose={() => setDowngradeDialogState(null)}
+          grund={downgradeDialogState.grund}
+          aktuelles_paket={downgradeDialogState.aktuelles_paket}
+          neues_paket={downgradeDialogState.neues_paket}
+        />
+      )}
+
       {/* ── Pricing Section ───────────────────────────────────────────────── */}
       <section
         id="preise"
@@ -182,6 +339,8 @@ export default function Pricing() {
               const price = PRICING[plan.key][duration]
               const saved = savings(plan.key, duration)
               const monthlyRate = monthly(plan.key, duration)
+              const loadingKey = `${plan.key}-${duration}`
+              const isLoading = loading === loadingKey
 
               return (
                 <div
@@ -248,25 +407,44 @@ export default function Pricing() {
                   </ul>
 
                   {/* CTA */}
-                  <a
-                    href="#registrieren"
+                  <button
+                    type="button"
+                    disabled={loading !== null}
+                    onClick={() => handleCheckout(plan.key, duration)}
                     className={[
-                      'block w-full text-center rounded-pill text-[15px] font-semibold px-6 py-3.5 transition-colors duration-150 min-h-[48px] active:scale-[0.98]',
+                      'block w-full text-center rounded-pill text-[15px] font-semibold px-6 py-3.5 transition-colors duration-150 min-h-[48px]',
                       plan.recommended
                         ? 'bg-accent hover:bg-accent-hover text-white'
                         : 'border-2 border-[#222222] hover:bg-[#F7F7F7] text-text-primary',
+                      loading !== null ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.98]',
                     ].join(' ')}
                   >
-                    {plan.cta}
-                  </a>
+                    {isLoading ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Spinner /> Wird geladen…
+                      </span>
+                    ) : plan.cta}
+                  </button>
                 </div>
               )
             })}
           </div>
 
+          {/* Inline error */}
+          {error && (
+            <div className="mt-4 rounded-[8px] bg-[#FEF2F2] border border-error px-4 py-3 text-center">
+              <p className="text-[13px] font-medium text-error">
+                {error}{' '}
+                <a href="mailto:kontakt@dubistdermakler.de" className="font-semibold underline">
+                  kontakt@dubistdermakler.de
+                </a>
+              </p>
+            </div>
+          )}
+
           {/* Footer renewal note */}
           <p className="text-center text-[12px] font-medium text-text-tertiary mt-5">
-            Nach Ablauf: Basic 149 € · Pro 199 € · Premium 259 € pro Monat — monatlich kündbar.
+            Nach Ablauf der Laufzeit werden deine Inserate automatisch von den Portalen genommen. Du kannst jederzeit reaktivieren oder ein neues Paket buchen — kein automatisches Abo.
           </p>
 
           {/* Tool-Paket Block */}
@@ -292,12 +470,21 @@ export default function Pricing() {
             </div>
 
             {/* CTA */}
-            <a
-              href="#tool-paket"
-              className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-pill px-5 py-2.5 text-[14px] font-semibold transition-all duration-150 whitespace-nowrap md:ml-auto min-h-[44px] bg-accent text-white hover:bg-accent-hover active:scale-[0.98]"
+            <button
+              type="button"
+              disabled={loading !== null}
+              onClick={() => handleAddonCheckout('toolpaket')}
+              className={[
+                'flex-shrink-0 inline-flex items-center gap-1.5 rounded-pill px-5 py-2.5 text-[14px] font-semibold transition-all duration-150 whitespace-nowrap md:ml-auto min-h-[44px] bg-accent text-white hover:bg-accent-hover',
+                loading !== null ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.98]',
+              ].join(' ')}
             >
-              Tool-Paket ansehen <ArrowRight size={14} aria-hidden="true" />
-            </a>
+              {loading === 'toolpaket' ? (
+                <><Spinner /> Wird geladen…</>
+              ) : (
+                <>Tool-Paket ansehen <ArrowRight size={14} aria-hidden="true" /></>
+              )}
+            </button>
           </div>
         </div>
       </section>

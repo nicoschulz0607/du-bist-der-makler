@@ -1,13 +1,11 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { buildSystemPrompt } from '@/lib/klara/build-system-prompt'
 import { checkRateLimit, recordUsage } from '@/lib/klara/rate-limit'
 import { generateTitleIfNeeded } from '@/lib/klara/title-generator'
+import { claudeStream } from '@/lib/ai/anthropic'
 
 export const maxDuration = 30
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,15 +66,18 @@ export async function POST(req: NextRequest) {
     const systemPrompt = await buildSystemPrompt(user.id, contextOrigin, supabase)
 
     // Claude API Streaming
-    const stream = anthropic.messages.stream({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
-      system: systemPrompt,
-      messages: (history ?? []).map((m) => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      })),
-    })
+    const stream = claudeStream(
+      {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: (history ?? []).map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        })),
+      },
+      { callSite: 'klara/chat', userId: user.id }
+    )
 
     const encoder = new TextEncoder()
     let fullResponse = ''
@@ -124,7 +125,7 @@ export async function POST(req: NextRequest) {
           // Usage tracken und Titel generieren (non-blocking)
           Promise.all([
             recordUsage(user.id, { input_tokens: tokensIn, output_tokens: tokensOut }, supabase),
-            generateTitleIfNeeded(convId, supabase, anthropic),
+            generateTitleIfNeeded(convId, supabase),
           ]).catch(() => {})
         } catch (err) {
           console.error('[klara/chat] Stream-Fehler:', err instanceof Error ? err.message : err)

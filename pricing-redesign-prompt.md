@@ -1,8 +1,8 @@
-# Pricing-Section Redesign — du-bist-der-makler.de
+# Pricing-Section Redesign — dubistdermakler.de
 
 ## Kontext
 
-Ich arbeite an der Pricing-Section von `du-bist-der-makler.de`. Die aktuelle Version sieht zu generisch und wenig "premium" aus, vor allem im Vergleich zu Konkurrenz-Pricing-Pages (Submagic, Raycast, Liveblocks, EZQL). Die "Empfohlen"-Karte hebt sich nicht stark genug ab, der Section-Hintergrund ist hellgrau und flach, und der Preis-Bereich hat zu wenig visuelle Energie.
+Ich arbeite an der Pricing-Section von `dubistdermakler.de`. Die aktuelle Version sieht zu generisch und wenig "premium" aus, vor allem im Vergleich zu Konkurrenz-Pricing-Pages (Submagic, Raycast, Liveblocks, EZQL). Die "Empfohlen"-Karte hebt sich nicht stark genug ab, der Section-Hintergrund ist hellgrau und flach, und der Preis-Bereich hat zu wenig visuelle Energie.
 
 Außerdem soll ein **Tool-Paket** ab 39 € (einmalig, wird beim späteren Paket-Kauf angerechnet) als sekundäres Angebot direkt unter den drei Pricing-Karten platziert werden — analog zum Pattern von Liveblocks (Satelliten-Block), nicht als vierte Karte.
 

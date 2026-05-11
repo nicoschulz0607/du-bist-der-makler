@@ -1,10 +1,9 @@
-import type Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { claudeCreate } from '@/lib/ai/anthropic'
 
 export async function generateTitleIfNeeded(
   convId: string,
-  supabase: SupabaseClient,
-  anthropic: Anthropic
+  supabase: SupabaseClient
 ): Promise<void> {
   const { data: conv } = await supabase
     .from('klara_conversations')
@@ -24,16 +23,19 @@ export async function generateTitleIfNeeded(
   if (!msgs || msgs.length < 2) return
 
   try {
-    const result = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 30,
-      messages: [
-        {
-          role: 'user',
-          content: `Fasse den Inhalt dieser Konversation in maximal 5 Wörtern auf Deutsch zusammen. Nur den Titel, keine Anführungszeichen, kein Punkt am Ende.\n\n${msgs.map((m) => `${m.role}: ${m.content}`).join('\n\n')}`,
-        },
-      ],
-    })
+    const result = await claudeCreate(
+      {
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 30,
+        messages: [
+          {
+            role: 'user',
+            content: `Fasse den Inhalt dieser Konversation in maximal 5 Wörtern auf Deutsch zusammen. Nur den Titel, keine Anführungszeichen, kein Punkt am Ende.\n\n${msgs.map((m) => `${m.role}: ${m.content}`).join('\n\n')}`,
+          },
+        ],
+      },
+      { callSite: 'klara/title' }
+    )
 
     const title = (result.content[0] as { text: string }).text.trim()
     await supabase

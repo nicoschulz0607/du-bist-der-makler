@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import AuthLayout from '@/components/auth/AuthLayout'
 import RegisterForm from '@/components/auth/RegisterForm'
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 export default function RegisterPage() {
   return (
     <AuthLayout>
-      <RegisterForm />
+      <Suspense>
+        <RegisterForm />
+      </Suspense>
     </AuthLayout>
   )
 }

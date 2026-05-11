@@ -39,11 +39,11 @@ export async function GET(
     method: 'REQUEST',
     dtstart: start,
     dtend: end,
-    summary: 'Makler-Beratung — du-bist-der-makler.de',
+    summary: 'Makler-Beratung — dubistdermakler.de',
     description: `Thema: ${anfrage['thema']}\n\n${anfrage['beschreibung']}`,
     location: 'Telefonisch',
     organizerName: 'Makler-Team',
-    organizerEmail: 'support@du-bist-der-makler.de',
+    organizerEmail: 'kontakt@dubistdermakler.de',
     attendeeName: (profile?.vorname as string | null) ?? 'Kunde',
     attendeeEmail: user.email ?? '',
   })
