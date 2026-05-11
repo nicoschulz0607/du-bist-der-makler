@@ -183,3 +183,204 @@ export async function sendCustomEmail(
     return { ok: false, message: 'Fehler beim Senden der E-Mail' }
   }
 }
+
+// ── Einstellungen-Actions ──────────────────────────────────────────────────────
+
+function parseBetragZuCent(raw: string): number | null {
+  const normalized = raw.trim().replace(',', '.').replace(/[^0-9.]/g, '')
+  const val = parseFloat(normalized)
+  if (isNaN(val) || val < 0) return null
+  return Math.round(val * 100)
+}
+
+export async function addAdminUser(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  try {
+    const adminEmail = await getAdminEmail()
+    const email = (formData.get('email') as string | null)?.toLowerCase().trim()
+    if (!email) return { ok: false, message: 'E-Mail-Adresse fehlt' }
+
+    const service = createServiceClient()
+    const { data: existing } = await service
+      .from('admin_users')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle()
+    if (existing) return { ok: false, message: `${email} ist bereits Admin` }
+
+    const { error } = await service
+      .from('admin_users')
+      .insert({ email, added_by: adminEmail })
+    if (error) throw error
+
+    await logAudit(adminEmail, 'admin_user_added', 'admin_user', undefined, { email })
+    revalidatePath('/helios/einstellungen')
+    return { ok: true, message: `${email} als Admin hinzugefügt` }
+  } catch (err) {
+    console.error('[helios/actions] addAdminUser error:', err)
+    return { ok: false, message: 'Fehler beim Hinzufügen' }
+  }
+}
+
+export async function removeAdminUser(adminId: string): Promise<ActionResult> {
+  try {
+    const adminEmail = await getAdminEmail()
+    const service = createServiceClient()
+
+    const { data: target } = await service
+      .from('admin_users')
+      .select('email')
+      .eq('id', adminId)
+      .maybeSingle()
+    if (!target) return { ok: false, message: 'Admin nicht gefunden' }
+    if (target.email === adminEmail) return { ok: false, message: 'Eigenes Konto kann nicht entfernt werden' }
+
+    const { count } = await service
+      .from('admin_users')
+      .select('id', { count: 'exact', head: true })
+    if ((count ?? 0) <= 1) return { ok: false, message: 'Es muss mindestens ein Admin verbleiben' }
+
+    const { error } = await service.from('admin_users').delete().eq('id', adminId)
+    if (error) throw error
+
+    await logAudit(adminEmail, 'admin_user_removed', 'admin_user', adminId, { email: target.email })
+    revalidatePath('/helios/einstellungen')
+    return { ok: true, message: `${target.email} entfernt` }
+  } catch (err) {
+    console.error('[helios/actions] removeAdminUser error:', err)
+    return { ok: false, message: 'Fehler beim Entfernen' }
+  }
+}
+
+export async function addFixedCost(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  try {
+    const adminEmail = await getAdminEmail()
+    const name = (formData.get('name') as string | null)?.trim()
+    const betragRaw = (formData.get('betrag') as string | null) ?? ''
+    const category = (formData.get('category') as string | null)?.trim()
+    const gueltig_ab = (formData.get('gueltig_ab') as string | null)?.trim()
+
+    if (!name) return { ok: false, message: 'Name fehlt' }
+    const betrag_cent = parseBetragZuCent(betragRaw)
+    if (betrag_cent === null) return { ok: false, message: 'Ungültiger Betrag — z.B. 20.50 oder 20,50' }
+    const validCategories = ['infra', 'portal', 'legal', 'marketing', 'tools', 'sonstiges']
+    if (!category || !validCategories.includes(category)) return { ok: false, message: 'Ungültige Kategorie' }
+    if (!gueltig_ab) return { ok: false, message: 'Gültig-ab-Datum fehlt' }
+
+    const service = createServiceClient()
+    const { error } = await service
+      .from('fixed_costs')
+      .insert({ name, betrag_cent, category, gueltig_ab })
+    if (error) throw error
+
+    await logAudit(adminEmail, 'fixed_cost_added', 'fixed_cost', undefined, { name, betrag_cent })
+    revalidatePath('/helios/einstellungen')
+    revalidatePath('/helios/kosten')
+    revalidatePath('/helios')
+    return { ok: true, message: `Fixkosten "${name}" hinzugefügt` }
+  } catch (err) {
+    console.error('[helios/actions] addFixedCost error:', err)
+    return { ok: false, message: 'Fehler beim Hinzufügen' }
+  }
+}
+
+export async function removeFixedCost(id: string): Promise<ActionResult> {
+  try {
+    const adminEmail = await getAdminEmail()
+    const service = createServiceClient()
+    const today = new Date().toISOString().slice(0, 10)
+
+    const { data: row } = await service.from('fixed_costs').select('name').eq('id', id).maybeSingle()
+    const { error } = await service.from('fixed_costs').update({ gueltig_bis: today }).eq('id', id)
+    if (error) throw error
+
+    await logAudit(adminEmail, 'fixed_cost_ended', 'fixed_cost', id, { name: row?.name ?? id })
+    revalidatePath('/helios/einstellungen')
+    revalidatePath('/helios/kosten')
+    revalidatePath('/helios')
+    return { ok: true, message: `Fixkosten "${row?.name ?? id}" beendet` }
+  } catch (err) {
+    console.error('[helios/actions] removeFixedCost error:', err)
+    return { ok: false, message: 'Fehler beim Beenden' }
+  }
+}
+
+export async function addAffiliateRevenue(
+  prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  try {
+    const adminEmail = await getAdminEmail()
+    const partner = (formData.get('partner') as string | null)?.trim()
+    const betragRaw = (formData.get('betrag') as string | null) ?? ''
+    const erstellt_am = (formData.get('erstellt_am') as string | null)?.trim()
+    const kundenEmail = (formData.get('kunden_email') as string | null)?.toLowerCase().trim() || null
+
+    if (!partner) return { ok: false, message: 'Partner fehlt' }
+    const betrag_cent = parseBetragZuCent(betragRaw)
+    if (betrag_cent === null) return { ok: false, message: 'Ungültiger Betrag — z.B. 20.50 oder 20,50' }
+    if (!erstellt_am) return { ok: false, message: 'Datum fehlt' }
+
+    const service = createServiceClient()
+    let user_id: string | null = null
+    if (kundenEmail) {
+      const { data: profile } = await service
+        .from('profiles')
+        .select('id')
+        .eq('email', kundenEmail)
+        .maybeSingle()
+      user_id = profile?.id ?? null
+    }
+
+    const { error } = await service
+      .from('affiliate_revenue')
+      .insert({ partner, betrag_cent, erstellt_am, ...(user_id ? { user_id } : {}) })
+    if (error) throw error
+
+    await logAudit(adminEmail, 'affiliate_revenue_added', 'affiliate', undefined, { partner, betrag_cent })
+    revalidatePath('/helios/einstellungen')
+    revalidatePath('/helios/kosten')
+    revalidatePath('/helios')
+    return { ok: true, message: `Affiliate-Einnahme von "${partner}" hinzugefügt` }
+  } catch (err) {
+    console.error('[helios/actions] addAffiliateRevenue error:', err)
+    return { ok: false, message: 'Fehler beim Hinzufügen' }
+  }
+}
+
+export async function removeAffiliateRevenue(id: string): Promise<ActionResult> {
+  try {
+    const adminEmail = await getAdminEmail()
+    const service = createServiceClient()
+
+    const { data: row } = await service.from('affiliate_revenue').select('partner').eq('id', id).maybeSingle()
+    const { error } = await service.from('affiliate_revenue').delete().eq('id', id)
+    if (error) throw error
+
+    await logAudit(adminEmail, 'affiliate_revenue_removed', 'affiliate', id, { partner: row?.partner ?? id })
+    revalidatePath('/helios/einstellungen')
+    revalidatePath('/helios/kosten')
+    revalidatePath('/helios')
+    return { ok: true, message: `Affiliate-Eintrag gelöscht` }
+  } catch (err) {
+    console.error('[helios/actions] removeAffiliateRevenue error:', err)
+    return { ok: false, message: 'Fehler beim Löschen' }
+  }
+}
+
+export async function revalidateHeliosCache(): Promise<ActionResult> {
+  try {
+    const adminEmail = await getAdminEmail()
+    revalidatePath('/helios', 'layout')
+    await logAudit(adminEmail, 'cache_cleared', undefined, undefined, {})
+    return { ok: true, message: 'Cache geleert — alle Helios-Seiten werden neu geladen' }
+  } catch (err) {
+    console.error('[helios/actions] revalidateHeliosCache error:', err)
+    return { ok: false, message: 'Fehler beim Leeren des Caches' }
+  }
+}

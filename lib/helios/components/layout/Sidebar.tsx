@@ -78,7 +78,7 @@ export function Sidebar() {
       </nav>
 
       <div className="px-4 py-4 border-t border-white/5">
-        <p className="text-[10px] text-white/20">Sprint 4 · Operations & Einstellungen</p>
+        <p className="text-[10px] text-white/20">HELIOS · dubistdermakler.de</p>
       </div>
     </aside>
   )

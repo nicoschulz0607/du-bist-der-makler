@@ -9,7 +9,6 @@ import type { ColumnDef } from '@/lib/helios/components/tables/DataTable'
 import { Badge }        from '@/lib/helios/components/primitives/Badge'
 import { EmptyState }   from '@/lib/helios/components/feedback/EmptyState'
 import type { HeliosListing, HeliosMaklerTermin } from '@/lib/helios/sources/supabase'
-import { CalendarDays } from 'lucide-react'
 
 function tageInaktiv(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000)
@@ -158,12 +157,10 @@ export default async function OperationsPage() {
             subtitle="Bestätigte Termine (nächste 7 Tage)"
           >
             {upcomingTermine.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 gap-2">
-                <CalendarDays size={28} className="text-helios-text-subtle" />
-                <p className="text-xs text-helios-text-subtle text-center">
-                  Keine bestätigten Termine in den nächsten 7 Tagen
-                </p>
-              </div>
+              <EmptyState
+                title="Keine anstehenden Termine"
+                description="Keine bestätigten Termine in den nächsten 7 Tagen."
+              />
             ) : (
               <div className="divide-y divide-helios-border">
                 {upcomingTermine.map((t: HeliosMaklerTermin) => (
@@ -209,7 +206,7 @@ export default async function OperationsPage() {
             emptyState={
               <EmptyState
                 title="Keine inaktiven Listings"
-                description="Alle aktiven Listings hatten in den letzten 14 Tagen Aktivität."
+                description="Alle Listings aktiv — kein Aufräumbedarf."
               />
             }
             caption="Inaktive Listings"

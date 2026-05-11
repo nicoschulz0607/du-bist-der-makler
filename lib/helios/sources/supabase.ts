@@ -456,3 +456,131 @@ export const fetchLetzteBusinessEvents = unstable_cache(
   ['helios-letzte-events'],
   { revalidate: 60 }
 )
+
+// ── Einstellungen: kein unstable_cache — immer frische Daten ──────────────────
+
+export interface AdminUserRow {
+  id: string
+  email: string
+  added_at: string
+  added_by: string | null
+}
+
+export interface FixkostenRow {
+  id: string
+  name: string
+  betrag_cent: number
+  waehrung: string
+  category: string
+  gueltig_ab: string
+  gueltig_bis: string | null
+}
+
+export interface AffiliateRow {
+  id: string
+  partner: string
+  betrag_cent: number
+  waehrung: string
+  erstellt_am: string
+  user_id: string | null
+  user_email: string | null
+}
+
+export interface AuditRow {
+  id: string
+  admin_email: string
+  action: string
+  target_type: string | null
+  target_id: string | null
+  details: Record<string, unknown> | null
+  created_at: string
+}
+
+export async function fetchAdminUsers(): Promise<AdminUserRow[]> {
+  const service = createServiceClient()
+  const { data } = await service
+    .from('admin_users')
+    .select('id, email, added_at, added_by')
+    .order('added_at', { ascending: true })
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    email: r.email,
+    added_at: r.added_at,
+    added_by: r.added_by ?? null,
+  }))
+}
+
+export async function fetchFixkosten(): Promise<FixkostenRow[]> {
+  const service = createServiceClient()
+  const today = new Date().toISOString().slice(0, 10)
+  const { data } = await service
+    .from('fixed_costs')
+    .select('id, name, betrag_cent, waehrung, category, gueltig_ab, gueltig_bis')
+    .order('category')
+    .order('name')
+  return (data ?? [])
+    .filter((r) => !r.gueltig_bis || r.gueltig_bis > today)
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      betrag_cent: r.betrag_cent,
+      waehrung: r.waehrung ?? 'eur',
+      category: r.category ?? 'sonstiges',
+      gueltig_ab: r.gueltig_ab,
+      gueltig_bis: r.gueltig_bis ?? null,
+    }))
+}
+
+export async function fetchAffiliateRevenue(): Promise<AffiliateRow[]> {
+  const service = createServiceClient()
+  const { data } = await service
+    .from('affiliate_revenue')
+    .select('id, partner, betrag_cent, waehrung, erstellt_am, user_id')
+    .order('erstellt_am', { ascending: false })
+    .limit(50)
+  if (!data || data.length === 0) return []
+  const userIds = [...new Set(data.filter((r) => r.user_id).map((r) => r.user_id as string))]
+  const emailMap = new Map<string, string>()
+  if (userIds.length > 0) {
+    const { data: profiles } = await service
+      .from('profiles')
+      .select('id, email')
+      .in('id', userIds)
+    for (const p of profiles ?? []) {
+      if (p.email) emailMap.set(p.id, p.email)
+    }
+  }
+  return data.map((r) => ({
+    id: r.id,
+    partner: r.partner,
+    betrag_cent: r.betrag_cent,
+    waehrung: r.waehrung ?? 'eur',
+    erstellt_am: r.erstellt_am,
+    user_id: r.user_id ?? null,
+    user_email: r.user_id ? (emailMap.get(r.user_id) ?? null) : null,
+  }))
+}
+
+export async function fetchAuditLog(
+  page = 1,
+  perPage = 20
+): Promise<{ rows: AuditRow[]; total: number }> {
+  const service = createServiceClient()
+  const from = (page - 1) * perPage
+  const to = from + perPage - 1
+  const { data, count } = await service
+    .from('helios_audit_log')
+    .select('id, admin_email, action, target_type, target_id, details, created_at', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to)
+  const rows: AuditRow[] = (data ?? []).map((r) => ({
+    id: r.id,
+    admin_email: r.admin_email,
+    action: r.action,
+    target_type: r.target_type ?? null,
+    target_id: r.target_id ?? null,
+    details: (r.details ?? null) as Record<string, unknown> | null,
+    created_at: r.created_at,
+  }))
+  return { rows, total: count ?? 0 }
+}
