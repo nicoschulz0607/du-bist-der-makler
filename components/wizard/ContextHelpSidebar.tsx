@@ -67,22 +67,6 @@ function Station3Help() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-[#EEEEEE] bg-white p-5">
-        <h4 className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary mb-3">
-          Verbrauch vs. Bedarf
-        </h4>
-        <div className="space-y-3 text-[12px]">
-          <div>
-            <p className="font-semibold text-text-primary mb-1">Verbrauchsausweis</p>
-            <p className="text-text-secondary leading-relaxed">Basiert auf Heizkosten der letzten 3 Jahre. Günstig (80–100 €), bei Leerstand schwierig.</p>
-          </div>
-          <div>
-            <p className="font-semibold text-text-primary mb-1">Bedarfsausweis</p>
-            <p className="text-text-secondary leading-relaxed">Basiert auf Dämmung & Heiztechnik. Teurer (250–500 €), aber objektiver. Pflicht bei Häusern vor 1977 mit unter 5 Wohneinheiten.</p>
-          </div>
-        </div>
-      </div>
-
       <div className="rounded-xl bg-[#F5F5F5] p-4">
         <h4 className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary mb-2">
           Energieklassen
