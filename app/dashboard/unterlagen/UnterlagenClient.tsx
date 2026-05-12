@@ -5,6 +5,19 @@ import { Share2 } from 'lucide-react'
 import DokumentKarte, { DokumentMitStatus } from './DokumentKarte'
 import DokumentDetailDrawer from './DokumentDetailDrawer'
 import FortschrittsBalken from './FortschrittsBalken'
+import TeilenDialog from './TeilenDialog'
+import TeilenMappeListe from './TeilenMappeListe'
+
+interface ShareData {
+  id: string
+  empfaenger_name: string
+  empfaenger_email: string | null
+  ablaufdatum: string
+  abgerufen_am: string[]
+  zurueckgezogen_am: string | null
+  share_token: string
+  created_at: string
+}
 
 interface UnterlagenClientProps {
   basisDokumente: DokumentMitStatus[]
@@ -12,6 +25,8 @@ interface UnterlagenClientProps {
   objekttypLabel: string | null
   pflichtVorhanden: number
   pflichtGesamt: number
+  shares: ShareData[]
+  appUrl: string
 }
 
 export default function UnterlagenClient({
@@ -20,8 +35,19 @@ export default function UnterlagenClient({
   objekttypLabel,
   pflichtVorhanden,
   pflichtGesamt,
+  shares,
+  appUrl,
 }: UnterlagenClientProps) {
   const [activeDokument, setActiveDokument] = useState<DokumentMitStatus | null>(null)
+  const [showTeilenDialog, setShowTeilenDialog] = useState(false)
+  const [localShares, setLocalShares] = useState(shares)
+
+  const alleDokumente = [...basisDokumente, ...spezifischeDokumente]
+
+  function handleShareCreated(share: { share_url: string; share_id: string }) {
+    // Share-Liste lokal updaten ohne Re-fetch (wird bei nächstem Load aktualisiert)
+    void share // wird serverseitig revalidiert via revalidatePath in actions.ts
+  }
 
   return (
     <>
@@ -33,8 +59,8 @@ export default function UnterlagenClient({
         />
         <div className="flex justify-end">
           <button
+            onClick={() => setShowTeilenDialog(true)}
             className="flex items-center gap-2 text-[13px] font-medium text-accent hover:text-accent/80 transition-colors"
-            onClick={() => {/* TeilenDialog — Step 4 */}}
           >
             <Share2 size={14} strokeWidth={1.75} />
             Mappe mit Interessent teilen
@@ -85,11 +111,23 @@ export default function UnterlagenClient({
         </div>
       )}
 
+      {/* Aktive Mappen */}
+      <TeilenMappeListe shares={localShares} appUrl={appUrl} />
+
       {/* Detail-Drawer */}
       {activeDokument && (
         <DokumentDetailDrawer
           dokument={activeDokument}
           onClose={() => setActiveDokument(null)}
+        />
+      )}
+
+      {/* Teilen-Dialog */}
+      {showTeilenDialog && (
+        <TeilenDialog
+          dokumente={alleDokumente}
+          onClose={() => setShowTeilenDialog(false)}
+          onCreated={handleShareCreated}
         />
       )}
     </>

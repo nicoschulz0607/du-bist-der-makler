@@ -21,21 +21,28 @@ export default async function UnterlagenPage() {
   // Listing laden (objekttyp für Katalog-Filter)
   const { data: listing } = await supabase
     .from('listings')
-    .select('id, objekttyp, vermietet')
+    .select('id, objekttyp')
     .eq('user_id', user.id)
     .maybeSingle()
 
   const objekttyp = (listing?.objekttyp ?? null) as ObjektTyp | null
-  const istVermietet = listing?.vermietet === true
+  const istVermietet = false // Vermietungs-Flag Phase 2
 
   // Energieausweis-Backfill beim ersten Aufruf (idempotent)
   await initEnergieausweisBackfill()
 
-  // Dokumente aus DB laden
-  const { data: dbDokumente } = await supabase
-    .from('dokumente')
-    .select('id, dokument_typ, status, datei_url, datei_name, notiz')
-    .eq('user_id', user.id)
+  // Dokumente + Shares aus DB laden
+  const [{ data: dbDokumente }, { data: sharesData }] = await Promise.all([
+    supabase
+      .from('dokumente')
+      .select('id, dokument_typ, status, datei_url, datei_name, notiz')
+      .eq('user_id', user.id),
+    supabase
+      .from('dokument_shares')
+      .select('id, empfaenger_name, empfaenger_email, ablaufdatum, abgerufen_am, zurueckgezogen_am, share_token, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+  ])
 
   const dbByTyp = new Map(
     (dbDokumente ?? []).map((d) => [d.dokument_typ, d])
@@ -73,6 +80,8 @@ export default async function UnterlagenPage() {
     (d) => dbByTyp.get(d.typ)?.status === 'vorhanden'
   ).length
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://du-bist-der-makler.de'
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -97,6 +106,8 @@ export default async function UnterlagenPage() {
         objekttypLabel={objekttyp ? OBJEKTTYP_LABELS[objekttyp] : null}
         pflichtVorhanden={pflichtVorhanden}
         pflichtGesamt={pflichtGesamt}
+        shares={(sharesData ?? []) as never}
+        appUrl={appUrl}
       />
     </div>
   )
