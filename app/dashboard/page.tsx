@@ -10,6 +10,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Circle,
+  FolderOpen,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -31,16 +32,19 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  const [profileRes, listingRes, checkRes, wizardRes] = await Promise.all([
+  const [profileRes, listingRes, checkRes, wizardRes, unterlagenRes] = await Promise.all([
     supabase.from('profiles').select('vorname, paket_tier, created_at, wizard_onboarding_shown, wizard_banner_dismissals').eq('id', user.id).single(),
     supabase.from('listings').select('*').eq('user_id', user.id).order('created_at').limit(1).maybeSingle(),
     supabase.from('checkliste_status').select('aufgabe_id, completed').eq('user_id', user.id),
     supabase.from('wizard_progress').select('aktuelle_station, abgeschlossen_am').eq('user_id', user.id).maybeSingle(),
+    supabase.from('dokumente').select('status').eq('user_id', user.id),
   ])
 
   const profile = profileRes.data
   const listing = listingRes.data
   const checkItems = checkRes.data ?? []
+  const unterlagenItems = unterlagenRes.data ?? []
+  const unterlagenVorhanden = unterlagenItems.filter((d) => d.status === 'vorhanden').length
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const profileRaw = profile as any
   const wizardProgress = wizardRes.data
@@ -231,6 +235,19 @@ export default async function DashboardPage() {
             title="Schritt-für-Schritt"
             description="Geführte Checkliste durch alle Phasen des Verkaufs."
             href="/dashboard/schritte"
+            requiredTier="starter"
+            currentTier={tier}
+          />
+          <FeatureCard
+            icon={<FolderOpen size={20} strokeWidth={1.75} />}
+            iconBg="bg-emerald-100 text-emerald-700"
+            title="Meine Unterlagen"
+            description={
+              unterlagenVorhanden > 0
+                ? `${unterlagenVorhanden} Dokument${unterlagenVorhanden !== 1 ? 'e' : ''} vorhanden — Käufer-Mappe teilen`
+                : 'Grundbuchauszug, Energieausweis & Co. für Käufer bereitstellen.'
+            }
+            href="/dashboard/unterlagen"
             requiredTier="starter"
             currentTier={tier}
           />

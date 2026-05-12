@@ -51,7 +51,7 @@ export default function DokumentDetailDrawer({ dokument, onClose }: DokumentDeta
   }
 
   function handleDelete() {
-    if (!dokument.db_id) return
+    if (!dokument?.db_id) return
     startTransition(async () => {
       await deleteDokument(dokument!.db_id!)
       setConfirmDelete(false)

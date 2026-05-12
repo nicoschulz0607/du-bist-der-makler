@@ -16,7 +16,7 @@ interface DokumentMitStatus extends DokumentDefinition {
   notiz?: string | null
 }
 
-const ICONS: Record<string, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
+const ICONS: Record<string, React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>> = {
   BookOpen, Zap, Map, CreditCard, Stamp, Ruler, SquareDashed,
   Wrench, Shield, Layers, FileText, Receipt, Banknote, Users,
   PlugZap, Mountain, Building2,

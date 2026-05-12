@@ -45,11 +45,15 @@ export async function validiereShareToken(
 
   // Audit-Trail: Zugriff protokollieren
   const abgerufen = [...((share.abgerufen_am as string[]) ?? []), new Date().toISOString()]
-  await service
-    .from('dokument_shares')
-    .update({ abgerufen_am: abgerufen })
-    .eq('id', share.id)
-    .catch(() => null)
+  try {
+    await service
+      .from('dokument_shares')
+      .update({ abgerufen_am: abgerufen })
+      .eq('id', share.id)
+      .throwOnError()
+  } catch {
+    // best-effort audit
+  }
 
   return {
     ok: true,

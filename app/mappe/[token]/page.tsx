@@ -117,11 +117,15 @@ export default async function MappePage({ params }: PageProps) {
   if (currentShare) {
     const arr: string[] = currentShare.abgerufen_am ?? []
     arr.push(new Date().toISOString())
-    await service
-      .from('dokument_shares')
-      .update({ abgerufen_am: arr })
-      .eq('id', share.id)
-      .catch(() => null)
+    try {
+      await service
+        .from('dokument_shares')
+        .update({ abgerufen_am: arr })
+        .eq('id', share.id)
+        .throwOnError()
+    } catch {
+      // best-effort audit
+    }
   }
 
   // Katalog-Namen für Dokument-Typen laden

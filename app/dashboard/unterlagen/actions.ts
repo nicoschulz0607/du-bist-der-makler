@@ -50,18 +50,20 @@ export async function initEnergieausweisBackfill() {
 
   if (!listing?.energieausweis_status) return
 
-  await supabase
-    .from('dokumente')
-    .insert({
-      user_id: user.id,
-      listing_id: listing.id,
-      dokument_typ: 'energieausweis',
-      status: listing.energieausweis_status === 'vorhanden' ? 'vorhanden' : 'angefragt',
-      datei_url: listing.energieausweis_datei_url ?? null,
-    })
-    .throwOnError()
-    .then(() => null)
-    .catch(() => null) // ON CONFLICT (user_id, dokument_typ) → ignorieren
+  try {
+    await supabase
+      .from('dokumente')
+      .insert({
+        user_id: user.id,
+        listing_id: listing.id,
+        dokument_typ: 'energieausweis',
+        status: listing.energieausweis_status === 'vorhanden' ? 'vorhanden' : 'angefragt',
+        datei_url: listing.energieausweis_datei_url ?? null,
+      })
+      .throwOnError()
+  } catch {
+    // ON CONFLICT (user_id, dokument_typ) → ignorieren
+  }
 }
 
 // ── CRUD ──────────────────────────────────────────────────────────────────────
