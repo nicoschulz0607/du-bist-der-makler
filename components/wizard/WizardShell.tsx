@@ -203,29 +203,32 @@ export default function WizardShell({
 
       {/* Station content */}
       <main className="flex-1 overflow-y-auto">
-        <WizardLayout layout={stationConfig?.layout ?? 'focus'} sidebar={sidebar}>
-          {/* Station header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[11px] font-bold text-[#1B6B45] uppercase tracking-wider">
-                Schritt {currentStation} von 9
-              </span>
-              <span className="text-[11px] text-text-tertiary">·</span>
-              <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">
-                {stationConfig?.phase}
-              </span>
-            </div>
-            <h1
-              className="text-[28px] md:text-[32px] font-bold text-text-primary leading-tight"
-              style={{ letterSpacing: '-0.4px' }}
-            >
-              {stationConfig?.title}
-            </h1>
-            <p className="text-[15px] text-text-secondary mt-2 leading-relaxed">
-              {stationConfig?.subtitle}
-            </p>
-          </div>
-
+        <WizardLayout
+          layout={stationConfig?.layout ?? 'focus'}
+          sidebar={sidebar}
+          header={
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[11px] font-bold text-[#1B6B45] uppercase tracking-wider">
+                  Schritt {currentStation} von 9
+                </span>
+                <span className="text-[11px] text-text-tertiary">·</span>
+                <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">
+                  {stationConfig?.phase}
+                </span>
+              </div>
+              <h1
+                className="text-[28px] md:text-[32px] font-bold text-text-primary leading-tight"
+                style={{ letterSpacing: '-0.4px' }}
+              >
+                {stationConfig?.title}
+              </h1>
+              <p className="text-[15px] text-text-secondary mt-2 leading-relaxed">
+                {stationConfig?.subtitle}
+              </p>
+            </>
+          }
+        >
           {/* Station 1 — Grunddaten */}
           {currentStation === 1 && (
             <Station1Grunddaten
