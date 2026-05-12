@@ -61,6 +61,36 @@ function fileToBase64(file: File): Promise<string> {
   })
 }
 
+function resizeFileBeforeUpload(file: File, maxPx = 1600): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      let w = img.naturalWidth
+      let h = img.naturalHeight
+      if (w > maxPx || h > maxPx) {
+        const ratio = Math.min(maxPx / w, maxPx / h)
+        w = Math.round(w * ratio)
+        h = Math.round(h * ratio)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { reject(new Error('canvas nicht verfügbar')); return }
+      ctx.drawImage(img, 0, 0, w, h)
+      canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(new Error('Resize fehlgeschlagen')),
+        'image/jpeg',
+        0.88
+      )
+    }
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Bild konnte nicht geladen werden')) }
+    img.src = objectUrl
+  })
+}
+
 function toFotoItem(s: FotoState): FotoItem | null {
   if (!s.url) return null
   return {
@@ -127,10 +157,10 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
 
   async function uploadFile(file: File): Promise<string> {
     const supabase = createClient()
-    const ext = file.name.split('.').pop() ?? 'jpg'
-    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const resized = await resizeFileBeforeUpload(file)
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
     const storagePath = `${userId}/${listingId}/${filename}`
-    const { error } = await supabase.storage.from('listing-photos').upload(storagePath, file)
+    const { error } = await supabase.storage.from('listing-photos').upload(storagePath, resized, { contentType: 'image/jpeg' })
     if (error) throw new Error(error.message)
     const { data: { publicUrl } } = supabase.storage.from('listing-photos').getPublicUrl(storagePath)
     return publicUrl
@@ -287,6 +317,7 @@ export default function FotoUpload({ userId, listingId, initialFotos, onChange }
   function handleDragOver(e: React.DragEvent, index: number) {
     e.preventDefault()
     if (dragIndex === null || dragIndex === index) return
+    if (dragOverIndex === index) return
     setDragOverIndex(index)
   }
 
