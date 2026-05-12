@@ -264,6 +264,21 @@ export default function Station3Energieausweis({
         </div>
       )}
 
+      {/* Erklärung Verbrauch vs. Bedarf — nur solange noch keine Option gewählt */}
+      {!status && (
+        <details className="rounded-lg border border-[#EEEEEE] bg-[#FAFAFA] p-4">
+          <summary className="text-[13px] font-medium text-text-primary cursor-pointer select-none">
+            Was ist ein Energieausweis? Verbrauch vs. Bedarf
+          </summary>
+          <div className="text-[13px] text-text-secondary mt-3 leading-relaxed space-y-2">
+            <p>Der Energieausweis ist beim Verkauf von Immobilien Pflicht (Gebäudeenergiegesetz). Es gibt zwei Arten:</p>
+            <p><strong className="text-text-primary">Verbrauchsausweis:</strong> Basiert auf den tatsächlichen Heizkosten der letzten 3 Jahre. Günstiger (~80–100 €), aber bei Leerstand schwierig.</p>
+            <p><strong className="text-text-primary">Bedarfsausweis:</strong> Basiert auf Baujahr, Dämmung, Heizungsart. Teurer (~250–500 €), aber objektiver. Für Häuser vor 1977 mit weniger als 5 Wohneinheiten Pflicht.</p>
+            <p>Der Energieausweis muss spätestens bei der Besichtigung vorgelegt und im Inserat erwähnt werden. Verstöße: bis zu 15.000 € Bußgeld.</p>
+          </div>
+        </details>
+      )}
+
       {/* Mock Bestell-Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4">
