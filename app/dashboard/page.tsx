@@ -16,6 +16,7 @@ import { getKlaraContext } from '@/lib/klara/context'
 import { getPrimarySignal } from '@/lib/klara/triggers'
 import { getRecentEvents } from '@/lib/activity/log'
 import ActivityTimeline from '@/components/dashboard/ActivityTimeline'
+import PortalPerformance from '@/components/dashboard/PortalPerformance'
 
 function differenceInDays(from: Date, to: Date): number {
   return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
@@ -185,30 +186,9 @@ export default async function DashboardPage() {
 
       <ActivityTimeline events={recentEvents} />
 
-      {/* Portal-Status (nur wenn aktiv) */}
+      {/* Portal-Performance (nur wenn aktiv) */}
       {listing?.status === 'aktiv' && (
-        <div>
-          <h2 className="text-[17px] font-bold text-text-primary mb-3" style={{ letterSpacing: '-0.18px' }}>Portal-Status</h2>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: 'du-bist-der-makler.de', active: true },
-              { label: 'ImmoScout24', active: canAccess(tier, 'premium') },
-              { label: 'eBay Kleinanzeigen', active: canAccess(tier, 'premium') },
-            ].map(({ label, active }) => (
-              <div
-                key={label}
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[13px] font-medium ${
-                  active
-                    ? 'border-accent bg-[#E8F5EE] text-accent'
-                    : 'border-[#DDDDDD] bg-white text-text-secondary'
-                }`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-accent' : 'bg-[#DDDDDD]'}`} />
-                {label}
-              </div>
-            ))}
-          </div>
-        </div>
+        <PortalPerformance listingId={listing.id} userId={user.id} />
       )}
 
       {/* Upgrade-Banner */}
