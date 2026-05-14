@@ -11,6 +11,7 @@ import {
   Settings,
   ShoppingBag,
   Wrench,
+  Zap,
 } from 'lucide-react'
 
 interface NavItem {
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { label: 'Operations',   href: '/helios/operations',icon: <Wrench size={16} />,          sprint: 4 },
   { label: 'Verkäufe',     href: '/helios/verkaeufe', icon: <ShoppingBag size={16} />,     sprint: 4 },
   { label: 'Einstellungen',href: '/helios/einstellungen',icon: <Settings size={16} />,    sprint: 4 },
+  { label: 'Trigger-Debug',href: '/helios/trigger-debug', icon: <Zap size={16} />,         sprint: 4 },
 ]
 
 export function Sidebar() {
