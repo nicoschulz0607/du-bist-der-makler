@@ -8,6 +8,7 @@ import { getActiveProvider } from './market-data-provider'
 import type { MarktwertDaten, LageDaten } from './market-data-provider'
 import { generiereExpose } from '@/lib/claude/expose'
 import type { ExposeOutput } from '@/lib/claude/expose'
+import { autoInitPortals } from '@/lib/portals/auto-init'
 
 export async function upsertWizardProgress(): Promise<{
   aktuelle_station: number
@@ -414,14 +415,11 @@ export async function veroeffentlicheListing(
       status: 'aktiv',
       veroeffentlicht_am: new Date().toISOString(),
       slug,
-      portal_status: {
-        eigene_seite: { status: 'live', live_seit: new Date().toISOString() },
-        immoscout: { status: 'pending_demo', hinweis: 'Demo-Modus — manuelle Übermittlung in Vorbereitung' },
-        ebay: { status: 'pending_demo', hinweis: 'Demo-Modus' },
-      },
     })
     .eq('id', listingId)
     .eq('user_id', user.id)
+
+  await autoInitPortals(listingId, user.id)
 
   const { data: progress } = await supabase
     .from('wizard_progress')
