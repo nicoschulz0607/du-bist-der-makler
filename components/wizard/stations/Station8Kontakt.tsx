@@ -1,18 +1,21 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useTransition } from 'react'
+import { Phone } from 'lucide-react'
 import { saveStation2Profile } from '@/lib/wizard/actions'
 
-interface ProfileData {
-  vorname: string | null
-  nachname: string | null
-  telefon: string | null
-  anschrift: string | null
+export interface ContactFormData {
+  vorname: string
+  nachname: string
+  telefon: string
+  anschrift: string
 }
 
 interface Props {
-  initialData: ProfileData
+  formData: ContactFormData
+  onFormChange: (data: ContactFormData) => void
   userEmail: string
+  onCanAdvanceChange: (can: boolean) => void
 }
 
 const inputBase =
@@ -20,30 +23,41 @@ const inputBase =
 
 const labelBase = 'block text-[13px] font-semibold text-text-primary mb-1.5'
 
-export default function Station2Eckdaten({ initialData, userEmail }: Props) {
-  const [form, setForm] = useState({
-    vorname: initialData.vorname ?? '',
-    nachname: initialData.nachname ?? '',
-    telefon: initialData.telefon ?? '',
-    anschrift: initialData.anschrift ?? '',
-  })
+export default function Station8Kontakt({ formData, onFormChange, userEmail, onCanAdvanceChange }: Props) {
   const [, startTransition] = useTransition()
 
-  function handleBlur(field: keyof typeof form) {
+  useEffect(() => {
+    onCanAdvanceChange(!!(formData.vorname && (formData.telefon || userEmail)))
+  }, [formData.vorname, formData.telefon, userEmail, onCanAdvanceChange])
+
+  function handleChange(field: keyof ContactFormData, value: string) {
+    onFormChange({ ...formData, [field]: value })
+  }
+
+  function handleBlur(field: keyof ContactFormData) {
     startTransition(async () => {
-      await saveStation2Profile({ [field]: form[field] })
+      await saveStation2Profile({ [field]: formData[field] })
     })
   }
 
   return (
     <div className="space-y-5">
+      <div className="rounded-2xl border border-accent/20 bg-accent-light/30 p-5">
+        <h3 className="text-[14px] font-bold text-text-primary mb-1.5 flex items-center gap-2">
+          <Phone size={14} className="text-accent" /> Diese Daten erscheinen in deinem Inserat
+        </h3>
+        <p className="text-[13px] text-text-secondary leading-relaxed">
+          Interessenten kontaktieren dich über die Daten, die du hier hinterlegst. Wir reichen jede Anfrage per E-Mail an dich weiter und führen sie in deinem CRM.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
           <label className={labelBase}>Vorname</label>
           <input
             type="text"
-            value={form.vorname}
-            onChange={(e) => setForm((p) => ({ ...p, vorname: e.target.value }))}
+            value={formData.vorname}
+            onChange={(e) => handleChange('vorname', e.target.value)}
             onBlur={() => handleBlur('vorname')}
             placeholder="Max"
             className={inputBase}
@@ -53,8 +67,8 @@ export default function Station2Eckdaten({ initialData, userEmail }: Props) {
           <label className={labelBase}>Nachname</label>
           <input
             type="text"
-            value={form.nachname}
-            onChange={(e) => setForm((p) => ({ ...p, nachname: e.target.value }))}
+            value={formData.nachname}
+            onChange={(e) => handleChange('nachname', e.target.value)}
             onBlur={() => handleBlur('nachname')}
             placeholder="Mustermann"
             className={inputBase}
@@ -66,8 +80,8 @@ export default function Station2Eckdaten({ initialData, userEmail }: Props) {
         <label className={labelBase}>Telefon</label>
         <input
           type="tel"
-          value={form.telefon}
-          onChange={(e) => setForm((p) => ({ ...p, telefon: e.target.value }))}
+          value={formData.telefon}
+          onChange={(e) => handleChange('telefon', e.target.value)}
           onBlur={() => handleBlur('telefon')}
           placeholder="+49 170 1234567"
           className={inputBase}
@@ -89,8 +103,8 @@ export default function Station2Eckdaten({ initialData, userEmail }: Props) {
         <label className={labelBase}>Deine Adresse <span className="text-text-tertiary font-normal">(optional)</span></label>
         <input
           type="text"
-          value={form.anschrift}
-          onChange={(e) => setForm((p) => ({ ...p, anschrift: e.target.value }))}
+          value={formData.anschrift}
+          onChange={(e) => handleChange('anschrift', e.target.value)}
           onBlur={() => handleBlur('anschrift')}
           placeholder="Musterstraße 12, 10115 Berlin"
           className={inputBase}

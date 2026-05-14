@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { canAccess, type Tier } from '@/lib/tier'
 import InteressentDetail from './InteressentDetail'
+import { logEvent } from '@/lib/activity/log'
+import { EVENT_TYPES } from '@/lib/activity/types'
 
 export const metadata = { title: 'Interessent — Dashboard' }
 
@@ -11,22 +13,30 @@ async function saveInteressent(id: string, formData: FormData): Promise<{ ok: bo
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'Nicht eingeloggt' }
 
+  const { data: vorher } = await supabase
+    .from('interessenten')
+    .select('status, listing_id')
+    .eq('id', id)
+    .single()
+
   const str = (key: string) => (formData.get(key) as string) || null
   const num = (key: string) => {
     const v = formData.get(key)
     return v && v !== '' ? Number(v) : null
   }
-  const int = (key: string) => {
+  const intVal = (key: string) => {
     const v = formData.get(key)
     return v && v !== '' ? parseInt(v as string, 10) : null
   }
+
+  const neuerStatus = (formData.get('status') as string) || 'neu'
 
   const { error } = await supabase.from('interessenten').update({
     name: (formData.get('name') as string).trim(),
     email: str('email'),
     telefon: str('telefon'),
     nachricht: str('nachricht'),
-    status: str('status') ?? 'neu',
+    status: neuerStatus,
     notizen: str('notizen'),
     quelle: str('quelle'),
     altersgruppe: str('altersgruppe'),
@@ -43,10 +53,23 @@ async function saveInteressent(id: string, formData: FormData): Promise<{ ok: bo
     reaktion_auf_preis: str('reaktion_auf_preis'),
     bedenken: str('bedenken'),
     abgegebenes_angebot: num('abgegebenes_angebot'),
-    bewertung_stars: int('bewertung_stars'),
+    bewertung_stars: intVal('bewertung_stars'),
   }).eq('id', id)
 
   if (error) return { ok: false, error: 'Fehler beim Speichern.' }
+
+  if (vorher && vorher.status !== neuerStatus) {
+    await logEvent({
+      user_id: user.id,
+      listing_id: vorher.listing_id ?? null,
+      interessent_id: id,
+      event_type: EVENT_TYPES.INTERESSENT_STATUS_GEAENDERT,
+      payload: { von: vorher.status, nach: neuerStatus },
+      source: 'user',
+      user_sichtbar: true,
+    })
+  }
+
   return { ok: true }
 }
 

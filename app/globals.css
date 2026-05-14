@@ -33,6 +33,25 @@
   --shadow-card: rgba(0,0,0,0.02) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 2px 6px, rgba(0,0,0,0.10) 0px 4px 8px;
   --shadow-hover: rgba(0,0,0,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.08) 0px 4px 12px, rgba(0,0,0,0.16) 0px 8px 20px;
   --shadow-subtle: rgba(0,0,0,0.08) 0px 1px 4px;
+
+  /* Helios Admin Design Tokens */
+  --color-helios-bg:           hsl(0 0% 97%);
+  --color-helios-surface:      hsl(0 0% 100%);
+  --color-helios-surface-muted:hsl(150 20% 97%);
+  --color-helios-border:       hsl(150 10% 90%);
+  --color-helios-text:         hsl(150 10% 15%);
+  --color-helios-text-muted:   hsl(150 5% 45%);
+  --color-helios-text-subtle:  hsl(150 5% 60%);
+  --color-helios-accent:       hsl(150 60% 26%);
+  --color-helios-accent-hover: hsl(150 60% 20%);
+  --color-helios-accent-soft:  hsl(150 50% 95%);
+  --color-helios-success:      hsl(140 60% 35%);
+  --color-helios-warning:      hsl(38 90% 50%);
+  --color-helios-danger:       hsl(0 70% 50%);
+  --color-helios-info:         hsl(210 70% 50%);
+  /* Sidebar — dark forest green */
+  --color-helios-sidebar:      hsl(150 35% 11%);
+  --color-helios-sidebar-hover:hsl(150 30% 17%);
 }
 
 /* Base */

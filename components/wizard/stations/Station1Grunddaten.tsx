@@ -36,7 +36,7 @@ const OBJEKTTYPEN = [
   'Sonstiges',
 ]
 
-export default function Station3Grunddaten({ initialListing, listingId, onCanAdvanceChange, onListingCreated }: Props) {
+export default function Station1Grunddaten({ initialListing, listingId, onCanAdvanceChange, onListingCreated }: Props) {
   const [form, setForm] = useState({
     objekttyp: initialListing?.objekttyp ?? '',
     adresse_strasse: initialListing?.adresse_strasse ?? '',
@@ -74,7 +74,7 @@ export default function Station3Grunddaten({ initialListing, listingId, onCanAdv
 
   return (
     <div className="space-y-5">
-      {listingId && (
+      {(initialListing?.objekttyp || initialListing?.adresse_strasse || initialListing?.wohnflaeche_qm) && (
         <div className="flex items-center gap-2 text-[13px] font-medium text-accent bg-[#E8F5EE] border border-accent/30 rounded-lg px-3 py-2">
           <CheckCircle2 size={14} className="flex-shrink-0" />
           Aus deinem Objekt übernommen

@@ -19,6 +19,7 @@ import {
   Lock,
   ChevronRight,
   Compass,
+  FolderOpen,
 } from 'lucide-react'
 import { canAccess, getTierLabel, type Tier } from '@/lib/tier'
 import { createClient } from '@/lib/supabase/client'
@@ -59,6 +60,7 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
         { label: 'Geführter Modus', href: '/dashboard/start', icon: <Compass size={16} strokeWidth={1.75} /> },
         { label: 'Schritt-für-Schritt', href: '/dashboard/schritte', icon: <CheckSquare size={16} strokeWidth={1.75} /> },
         { label: 'Mein Objekt', href: '/dashboard/objekt', icon: <Home size={16} strokeWidth={1.75} /> },
+        { label: 'Meine Unterlagen', href: '/dashboard/unterlagen', icon: <FolderOpen size={16} strokeWidth={1.75} /> },
       ],
     },
     {
