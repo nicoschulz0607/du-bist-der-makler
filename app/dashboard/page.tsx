@@ -14,6 +14,8 @@ import OnboardingModal from '@/components/wizard/OnboardingModal'
 import ReentryBanner from '@/components/wizard/ReentryBanner'
 import { getKlaraContext } from '@/lib/klara/context'
 import { getPrimarySignal } from '@/lib/klara/triggers'
+import { getRecentEvents } from '@/lib/activity/log'
+import ActivityTimeline from '@/components/dashboard/ActivityTimeline'
 
 function differenceInDays(from: Date, to: Date): number {
   return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
@@ -56,6 +58,8 @@ export default async function DashboardPage() {
 
   const klaraContext = await getKlaraContext(user.id)
   const primarySignal = getPrimarySignal(klaraContext)
+
+  const recentEvents = await getRecentEvents(user.id, { limit: 7 })
 
   return (
     <div className="space-y-7">
@@ -178,6 +182,8 @@ export default async function DashboardPage() {
           </p>
         )}
       </div>
+
+      <ActivityTimeline events={recentEvents} />
 
       {/* Portal-Status (nur wenn aktiv) */}
       {listing?.status === 'aktiv' && (
