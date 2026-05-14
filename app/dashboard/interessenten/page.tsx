@@ -38,7 +38,7 @@ async function createInteressent(formData: FormData): Promise<{ ok: boolean; id?
     listing_id: listing.id,
     interessent_id: data.id,
     event_type: EVENT_TYPES.INTERESSENT_ANGELEGT,
-    payload: { quelle: (formData.get('quelle') as string) || 'manuell' },
+    payload: { name: name.trim(), quelle: (formData.get('quelle') as string) || 'manuell' },
     source: 'user',
     user_sichtbar: true,
   })

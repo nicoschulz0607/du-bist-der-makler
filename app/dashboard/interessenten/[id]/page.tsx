@@ -15,7 +15,7 @@ async function saveInteressent(id: string, formData: FormData): Promise<{ ok: bo
 
   const { data: vorher } = await supabase
     .from('interessenten')
-    .select('status, listing_id')
+    .select('status, listing_id, name')
     .eq('id', id)
     .single()
 
@@ -64,7 +64,7 @@ async function saveInteressent(id: string, formData: FormData): Promise<{ ok: bo
       listing_id: vorher.listing_id ?? null,
       interessent_id: id,
       event_type: EVENT_TYPES.INTERESSENT_STATUS_GEAENDERT,
-      payload: { von: vorher.status, nach: neuerStatus },
+      payload: { name: vorher.name ?? null, von: vorher.status, nach: neuerStatus },
       source: 'user',
       user_sichtbar: true,
     })
