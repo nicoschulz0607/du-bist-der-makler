@@ -1,22 +1,14 @@
 import Link from 'next/link'
 import {
-  CheckSquare,
-  MessageSquare,
-  FileText,
-  TrendingUp,
-  Users,
-  Phone,
   Home,
   ArrowRight,
   CheckCircle2,
   Circle,
-  FolderOpen,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { canAccess, getUpgradeTarget, getUpgradeText, type Tier } from '@/lib/tier'
 import { CHECKLIST } from '@/lib/checklist'
-import FeatureCard from '@/components/dashboard/FeatureCard'
 import SmartCTACard from '@/components/dashboard/SmartCTACard'
 import OnboardingModal from '@/components/wizard/OnboardingModal'
 import ReentryBanner from '@/components/wizard/ReentryBanner'
@@ -35,19 +27,16 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  const [profileRes, listingRes, checkRes, wizardRes, unterlagenRes] = await Promise.all([
+  const [profileRes, listingRes, checkRes, wizardRes] = await Promise.all([
     supabase.from('profiles').select('vorname, paket_tier, created_at, wizard_onboarding_shown, wizard_banner_dismissals').eq('id', user.id).single(),
     supabase.from('listings').select('*').eq('user_id', user.id).order('created_at').limit(1).maybeSingle(),
     supabase.from('checkliste_status').select('aufgabe_id, completed').eq('user_id', user.id),
     supabase.from('wizard_progress').select('aktuelle_station, abgeschlossen_am').eq('user_id', user.id).maybeSingle(),
-    supabase.from('dokumente').select('status').eq('user_id', user.id),
   ])
 
   const profile = profileRes.data
   const listing = listingRes.data
   const checkItems = checkRes.data ?? []
-  const unterlagenItems = unterlagenRes.data ?? []
-  const unterlagenVorhanden = unterlagenItems.filter((d) => d.status === 'vorhanden').length
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const profileRaw = profile as any
   const wizardProgress = wizardRes.data
@@ -82,13 +71,10 @@ export default async function DashboardPage() {
 
       {/* Status-Banner */}
       {listing?.status === 'aktiv' ? (
-        <div className="flex items-center justify-between gap-4 bg-[#E8F5EE] border border-accent rounded-xl px-5 py-4">
+        <div className="flex items-center justify-between gap-4 bg-white border border-[#DDDDDD] rounded-xl px-5 py-2.5">
           <div className="flex items-center gap-3">
-            <CheckCircle2 size={20} className="text-accent flex-shrink-0" strokeWidth={2} />
-            <div>
-              <p className="text-[15px] font-semibold text-accent">Dein Inserat ist live!</p>
-              <p className="text-[13px] text-accent/70">Interessenten können dein Objekt jetzt finden.</p>
-            </div>
+            <CheckCircle2 size={18} className="text-accent flex-shrink-0" strokeWidth={2} />
+            <p className="text-[14px] font-semibold text-accent">Dein Inserat ist live!</p>
           </div>
           <Link
             href="/dashboard/objekt"
@@ -132,29 +118,6 @@ export default async function DashboardPage() {
           </Link>
         </div>
       )}
-
-      {/* Stats-Row */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-surface rounded-xl p-5">
-          <p className="text-[12px] font-semibold text-text-secondary uppercase tracking-wider mb-1">Profilaufrufe (7 Tage)</p>
-          <p className="text-[28px] font-bold text-text-primary" style={{ letterSpacing: '-0.28px' }}>
-            {listing?.status === 'aktiv' ? '—' : '—'}
-          </p>
-          <p className="text-[12px] text-text-tertiary mt-0.5">Verfügbar wenn Inserat live</p>
-        </div>
-        <div className="bg-surface rounded-xl p-5">
-          <p className="text-[12px] font-semibold text-text-secondary uppercase tracking-wider mb-1">Anfragen gesamt</p>
-          <p className="text-[28px] font-bold text-text-primary" style={{ letterSpacing: '-0.28px' }}>0</p>
-          <p className="text-[12px] text-text-tertiary mt-0.5">Noch keine Anfragen</p>
-        </div>
-        <div className="bg-surface rounded-xl p-5">
-          <p className="text-[12px] font-semibold text-text-secondary uppercase tracking-wider mb-1">Verbleibende Tage</p>
-          <p className={`text-[28px] font-bold ${daysLeft < 30 ? 'text-[#C07000]' : 'text-text-primary'}`} style={{ letterSpacing: '-0.28px' }}>
-            {daysLeft > 0 ? daysLeft : 0}
-          </p>
-          <p className="text-[12px] text-text-tertiary mt-0.5">von 180 Tagen Laufzeit</p>
-        </div>
-      </div>
 
       {/* Listing-Vorschau / Empty State */}
       <div>
@@ -207,6 +170,13 @@ export default async function DashboardPage() {
             </Link>
           </div>
         )}
+
+        {listing && (
+          <p className="text-[12px] text-text-tertiary mt-2">
+            Laufzeit: noch {daysLeft > 0 ? daysLeft : 0} von 180 Tagen
+            {daysLeft < 30 && <span className="text-[#C07000] font-semibold ml-1">(läuft bald ab)</span>}
+          </p>
+        )}
       </div>
 
       {/* Portal-Status (nur wenn aktiv) */}
@@ -234,84 +204,6 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
-
-      {/* Feature-Grid */}
-      <div>
-        <h2 className="text-[17px] font-bold text-text-primary mb-3" style={{ letterSpacing: '-0.18px' }}>Deine Tools</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <FeatureCard
-            icon={<CheckSquare size={20} strokeWidth={1.75} />}
-            iconBg="bg-green-100 text-green-700"
-            title="Schritt-für-Schritt"
-            description="Geführte Checkliste durch alle Phasen des Verkaufs."
-            href="/dashboard/schritte"
-            requiredTier="starter"
-            currentTier={tier}
-          />
-          <FeatureCard
-            icon={<FolderOpen size={20} strokeWidth={1.75} />}
-            iconBg="bg-emerald-100 text-emerald-700"
-            title="Meine Unterlagen"
-            description={
-              unterlagenVorhanden > 0
-                ? `${unterlagenVorhanden} Dokument${unterlagenVorhanden !== 1 ? 'e' : ''} vorhanden — Käufer-Mappe teilen`
-                : 'Grundbuchauszug, Energieausweis & Co. für Käufer bereitstellen.'
-            }
-            href="/dashboard/unterlagen"
-            requiredTier="starter"
-            currentTier={tier}
-          />
-          <FeatureCard
-            icon={<MessageSquare size={20} strokeWidth={1.75} />}
-            iconBg="bg-teal-100 text-teal-700"
-            title="KI-Chatbot 24/7"
-            description="Antworten auf alle Fragen rund um den Immobilienverkauf."
-            href="/dashboard/chatbot"
-            requiredTier="starter"
-            currentTier={tier}
-          />
-          <FeatureCard
-            icon={<FileText size={20} strokeWidth={1.75} />}
-            iconBg="bg-purple-100 text-purple-700"
-            title="KI-Exposé-Generator"
-            description="Professionelles Exposé-PDF in 20 Sekunden per KI."
-            href="/dashboard/expose"
-            requiredTier="pro"
-            currentTier={tier}
-            badge="Pro"
-          />
-          <FeatureCard
-            icon={<TrendingUp size={20} strokeWidth={1.75} />}
-            iconBg="bg-blue-100 text-blue-700"
-            title="KI-Preisrechner"
-            description="KI-gestützte Marktwertschätzung für deine Immobilie."
-            href="/dashboard/preisrechner"
-            requiredTier="pro"
-            currentTier={tier}
-            badge="Pro"
-          />
-          <FeatureCard
-            icon={<Users size={20} strokeWidth={1.75} />}
-            iconBg="bg-orange-100 text-orange-700"
-            title="Interessenten-CRM"
-            description="Alle Anfragen zentral verwalten und nachverfolgen."
-            href="/dashboard/interessenten"
-            requiredTier="pro"
-            currentTier={tier}
-            badge="Pro"
-          />
-          <FeatureCard
-            icon={<Phone size={20} strokeWidth={1.75} />}
-            iconBg="bg-rose-100 text-rose-700"
-            title="Makler-Support"
-            description="Direkter Draht zum Makler-Kollegen für komplexe Fragen."
-            href="/dashboard/support"
-            requiredTier="premium"
-            currentTier={tier}
-            badge="Premium"
-          />
-        </div>
-      </div>
 
       {/* Upgrade-Banner */}
       {upgradeTarget && upgradeInfo && (
