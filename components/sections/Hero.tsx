@@ -1,90 +1,98 @@
 import Image from 'next/image'
-import { CheckCircle2, TrendingUp, FileText } from 'lucide-react'
+import { CheckCircle2, Sparkles, Users, BarChart2, TrendingUp } from 'lucide-react'
 
-const trustBadges = [
-  'Einmalige Zahlung',
-  'KI-gestützt',
-  'Kein Makler nötig',
+const trustBadges = ['Einmalige Zahlung', 'KI-gestützt', 'Kein Makler nötig']
+
+const annotations = [
+  { icon: <Sparkles size={11} className="text-[#1B6B45]" />, label: 'KI-Exposé',    topPct: '16%' },
+  { icon: <Users    size={11} className="text-[#1B6B45]" />, label: 'Live CRM',     topPct: '48%' },
+  { icon: <BarChart2 size={11} className="text-[#1B6B45]" />, label: 'Statistiken', topPct: '82%' },
 ]
 
 function PropertyMockup() {
   return (
     <div className="relative w-full max-w-[460px] mx-auto lg:mx-0">
-      {/* Main card */}
-      <div className="bg-white rounded-[20px] border border-[#DDDDDD] shadow-hover overflow-hidden">
-        {/* Property image */}
-        <div className="relative h-52">
-          <Image
-            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&auto=format&fit=crop&q=80"
-            alt="Modernes Einfamilienhaus – Beispiel-Inserat"
-            fill
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 460px"
-            priority
-          />
-          {/* Status badge */}
-          <div className="absolute top-4 left-4 z-10">
-            <span className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-3 py-1 text-white text-[11px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" aria-hidden="true" />
+
+      {/* Hauptkarte */}
+      <div className="relative bg-white border border-[#DDDDDD] rounded-2xl shadow-xl overflow-visible">
+
+        {/* overflow-hidden nur für Bild-Clipping */}
+        <div className="overflow-hidden rounded-2xl">
+
+          {/* Bild */}
+          <div className="relative h-[195px]">
+            <Image
+              src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=700&auto=format&fit=crop&q=80"
+              alt="Beispiel-Inserat"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 460px"
+              priority
+            />
+            <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-[#1B6B45] px-2.5 py-1 text-white text-[10px] font-bold z-10">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               Aktiv
             </span>
-          </div>
-          {/* Price tag */}
-          <div className="absolute top-4 right-4 z-10 bg-white rounded-[10px] px-3 py-1.5 shadow-card">
-            <span className="text-[15px] font-bold text-text-primary">485.000 €</span>
-          </div>
-          {/* Bottom info bar */}
-          <div className="absolute bottom-0 left-0 right-0 z-10 bg-white/90 backdrop-blur-sm px-4 py-2.5 flex gap-4">
-            <span className="text-[12px] font-semibold text-text-secondary">120 m²</span>
-            <span className="text-[12px] font-semibold text-text-secondary">4 Zi.</span>
-            <span className="text-[12px] font-semibold text-text-secondary">Baujahr 1998</span>
-          </div>
-        </div>
-
-        {/* Card body */}
-        <div className="p-5">
-          <p className="text-[15px] font-semibold text-text-primary mb-1">Einfamilienhaus in München</p>
-          <p className="text-[13px] font-medium text-text-secondary mb-4">Bogenhausen · Ruhige Lage</p>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-surface rounded-[10px] p-3 text-center">
-              <p className="text-[18px] font-bold text-accent">12</p>
-              <p className="text-[11px] font-medium text-text-tertiary">Anfragen</p>
+            <div className="absolute top-4 right-4 bg-white rounded-[10px] px-3 py-1.5 shadow-card z-10">
+              <span className="text-[15px] font-bold text-text-primary">485.000 €</span>
             </div>
-            <div className="bg-surface rounded-[10px] p-3 text-center">
-              <p className="text-[18px] font-bold text-text-primary">4</p>
-              <p className="text-[11px] font-medium text-text-tertiary">Termine</p>
-            </div>
-            <div className="bg-surface rounded-[10px] p-3 text-center">
-              <p className="text-[18px] font-bold text-text-primary">847</p>
-              <p className="text-[11px] font-medium text-text-tertiary">Aufrufe</p>
+            <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm px-4 py-2.5 flex gap-4">
+              <span className="text-[12px] font-semibold text-text-secondary">120 m²</span>
+              <span className="text-[12px] font-semibold text-text-secondary">4 Zi.</span>
+              <span className="text-[12px] font-semibold text-text-secondary">Baujahr 1998</span>
             </div>
           </div>
+
+          {/* Body */}
+          <div className="p-5">
+            <p className="text-[15px] font-semibold text-text-primary mb-0.5">Einfamilienhaus in München</p>
+            <p className="text-[13px] text-gray-400 mb-4">Bogenhausen · Ruhige Lage</p>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                ['12',  'Anfragen', 'text-accent'],
+                ['4',   'Termine',  'text-text-primary'],
+                ['847', 'Aufrufe',  'text-text-primary'],
+              ].map(([n, label, color]) => (
+                <div key={label} className="bg-surface rounded-[10px] p-3 text-center">
+                  <p className={`text-[18px] font-bold ${color}`}>{n}</p>
+                  <p className="text-[11px] font-medium text-text-tertiary">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
+
+
       </div>
 
-      {/* Floating KI badge */}
-      <div className="absolute -bottom-4 -left-4 bg-white rounded-[14px] border border-[#DDDDDD] shadow-hover px-4 py-3 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-accent-light flex items-center justify-center flex-shrink-0">
-          <FileText size={16} className="text-accent" aria-hidden="true" />
-        </div>
-        <div>
-          <p className="text-[12px] font-bold text-text-primary">KI-Exposé erstellt</p>
-          <p className="text-[11px] font-medium text-text-tertiary">vor 2 Minuten · PDF ready</p>
-        </div>
+      {/* Annotation-Rail — direkt rechts an der Karte, nur Desktop */}
+      <div className="hidden lg:block absolute left-full top-0 bottom-0">
+        {annotations.map(({ icon, label, topPct }) => (
+          <div
+            key={label}
+            className="absolute flex items-center"
+            style={{ top: topPct, transform: 'translateY(-50%)' }}
+          >
+            <div className="w-5 border-t border-dashed border-gray-300 flex-shrink-0" />
+            <div className="flex items-center gap-1.5 bg-white border border-[#EEEEEE] rounded-lg px-2.5 py-1.5 shadow-sm whitespace-nowrap">
+              {icon}
+              <span className="text-[11px] font-semibold text-text-primary">{label}</span>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Floating stats badge */}
-      <div className="absolute -top-4 -right-4 bg-white rounded-[14px] border border-[#DDDDDD] shadow-hover px-4 py-3 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-accent-light flex items-center justify-center flex-shrink-0">
-          <TrendingUp size={16} className="text-accent" aria-hidden="true" />
-        </div>
-        <div>
-          <p className="text-[12px] font-bold text-accent">17.425 € gespart</p>
-          <p className="text-[11px] font-medium text-text-tertiary">vs. Maklerprovision</p>
-        </div>
+      {/* Mobile: Annotation-Tags */}
+      <div className="flex flex-wrap gap-2 mt-6 lg:hidden">
+        {annotations.map(({ icon, label }) => (
+          <div key={label} className="flex items-center gap-1.5 bg-[#F9FAFB] border border-[#EEEEEE] rounded-lg px-2.5 py-1.5">
+            {icon}
+            <span className="text-[11px] font-semibold text-text-primary">{label}</span>
+          </div>
+        ))}
       </div>
+
     </div>
   )
 }
@@ -92,14 +100,14 @@ function PropertyMockup() {
 export default function Hero() {
   return (
     <section
-      className="pt-[140px] pb-[100px] md:pt-[220px] md:pb-[180px] bg-white overflow-hidden"
+      className="min-h-screen flex items-center bg-white overflow-x-clip"
       aria-labelledby="hero-heading"
     >
-      <div className="container-landing">
+      <div className="container-landing w-full py-24">
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
-          {/* Left: Text */}
+
+          {/* Linke Spalte: Text */}
           <div className="flex-1 min-w-0">
-            {/* H1 */}
             <h1
               id="hero-heading"
               className="text-[44px] md:text-[54px] font-bold text-text-primary leading-[1.1] headline-display mb-6"
@@ -108,19 +116,13 @@ export default function Hero() {
               <span className="text-accent">professionell,</span>{' '}
               ohne Makler.
             </h1>
-
-            {/* Bold tagline */}
             <p className="text-[18px] font-semibold text-accent mb-3">
               Makler-Vorteile. Ohne Makler-Kosten.
             </p>
-
-            {/* Subline */}
             <p className="text-[17px] md:text-[19px] font-medium text-text-secondary leading-relaxed mb-10">
               Mit KI-Tools, Schritt-für-Schritt-Begleitung und echtem Makler-Know-how.
               Einmal zahlen, selbst verkaufen, tausende Euro sparen.
             </p>
-
-            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mb-8">
               <a
                 href="#preise"
@@ -135,14 +137,9 @@ export default function Hero() {
                 So funktioniert&apos;s
               </a>
             </div>
-
-            {/* Trust Badges */}
             <div className="flex flex-wrap gap-5">
               {trustBadges.map((badge) => (
-                <div
-                  key={badge}
-                  className="flex items-center gap-1.5 text-[13px] font-semibold text-text-secondary"
-                >
+                <div key={badge} className="flex items-center gap-1.5 text-[13px] font-semibold text-text-secondary">
                   <CheckCircle2 size={15} className="text-accent flex-shrink-0" aria-hidden="true" />
                   {badge}
                 </div>
@@ -150,10 +147,20 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right: Mockup */}
-          <div className="flex-shrink-0 w-full lg:w-auto lg:max-w-[460px] hidden md:block">
+          {/* Rechte Spalte: Mockup */}
+          <div className="flex-shrink-0 w-full lg:w-auto lg:max-w-[460px]">
             <PropertyMockup />
+            <div className="mt-5 flex items-center gap-4 bg-[#E8F5EE] border border-[#1B6B45]/20 rounded-2xl px-5 py-4">
+              <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                <TrendingUp size={20} className="text-[#1B6B45]" />
+              </div>
+              <div>
+                <p className="text-[22px] font-bold text-[#1B6B45] leading-none mb-1">17.425 € gespart</p>
+                <p className="text-[13px] text-[#1B6B45]/70">vs. Maklerprovision · bei 485.000 € Verkaufspreis</p>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
     </section>
