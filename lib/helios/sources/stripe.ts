@@ -1,5 +1,5 @@
 import { unstable_cache } from 'next/cache'
-import { stripe } from '@/lib/stripe'
+import { createStripe } from '@/lib/stripe'
 import { createServiceClient } from '@/lib/supabase/service'
 
 export interface UmsatzZeitraum {
@@ -16,7 +16,7 @@ export const fetchUmsatzZeitraum = unstable_cache(
     let count = 0
 
     // Iterate through paginated charge list
-    for await (const charge of stripe.charges.list({
+    for await (const charge of createStripe().charges.list({
       created: { gte: from, lte: to },
       limit: 100,
     })) {

@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/helios/auth'
 import { logAudit } from '@/lib/helios/audit'
 import { isLiveMode } from '@/lib/helios/stripeMode'
 import { revalidatePath } from 'next/cache'
-import { stripe } from '@/lib/stripe'
+import { createStripe } from '@/lib/stripe'
 import { resend, FROM_SUPPORT, REPLY_TO_SUPPORT } from '@/lib/resend'
 
 export type ActionResult = { ok: true; message: string } | { ok: false; message: string }
@@ -33,13 +33,13 @@ export async function issueRefund(paketId: string): Promise<ActionResult> {
     if (paket.status !== 'aktiv') return { ok: false, message: 'Paket ist nicht aktiv' }
     if (!paket.stripe_payment_intent_id) return { ok: false, message: 'Keine Payment-Intent-ID vorhanden' }
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(paket.stripe_payment_intent_id)
+    const paymentIntent = await createStripe().paymentIntents.retrieve(paket.stripe_payment_intent_id)
 
     if (paymentIntent.livemode !== isLiveMode()) {
       return { ok: false, message: 'Stripe Mode-Mismatch — Refund abgebrochen' }
     }
 
-    await stripe.refunds.create({ payment_intent: paket.stripe_payment_intent_id })
+    await createStripe().refunds.create({ payment_intent: paket.stripe_payment_intent_id })
 
     await service
       .from('pakete')
