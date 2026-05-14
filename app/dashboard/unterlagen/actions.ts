@@ -8,6 +8,8 @@ import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { resend, FROM_SUPPORT } from '@/lib/resend'
 import { dokumentShareEmail } from '@/lib/emails/dokument-share'
+import { logEvent } from '@/lib/activity/log'
+import { EVENT_TYPES } from '@/lib/activity/types'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -183,6 +185,16 @@ export async function uploadDokument(typ: string, formData: FormData) {
       .eq('user_id', user.id)
   }
 
+  await logEvent({
+    user_id: user.id,
+    listing_id: listing?.id ?? null,
+    dokument_id: dokumentId,
+    event_type: EVENT_TYPES.DOKUMENT_HOCHGELADEN,
+    payload: { dokument_typ: typ },
+    source: 'user',
+    user_sichtbar: true,
+  })
+
   revalidatePath('/dashboard/unterlagen')
   return { dokument_id: dokumentId, datei_url: publicUrl }
 }
@@ -291,6 +303,19 @@ export async function createMappeShare(input: z.infer<typeof ShareSchema>) {
       html,
     }).catch(() => null) // E-Mail-Fehler blockiert nicht den Share
   }
+
+  await logEvent({
+    user_id: user.id,
+    listing_id: listing?.id ?? null,
+    event_type: EVENT_TYPES.MAPPE_GETEILT,
+    payload: {
+      empfaenger_name: parsed.empfaenger_name,
+      anzahl_dokumente: parsed.dokument_ids.length,
+      gueltigkeit_tage: parsed.gueltigkeit_tage,
+    },
+    source: 'user',
+    user_sichtbar: true,
+  })
 
   revalidatePath('/dashboard/unterlagen')
   return { share_token: shareToken, share_url: shareUrl, share_id: share.id }

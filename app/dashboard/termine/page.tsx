@@ -5,6 +5,8 @@ import LockedPage from '@/components/dashboard/LockedPage'
 import TermineClient from './TermineClient'
 import { resend, FROM_EMAIL } from '@/lib/resend'
 import { buildIcal, buildAppointmentDatetime } from '@/lib/ical'
+import { logEvent } from '@/lib/activity/log'
+import { EVENT_TYPES } from '@/lib/activity/types'
 
 export const metadata = { title: 'Besichtigungen — Dashboard' }
 
@@ -107,6 +109,20 @@ ${profile?.vorname ?? 'Verkäufer'} · ${profile?.email ?? ''}</p>
       )
     }
   }
+
+  await logEvent({
+    user_id: user.id,
+    listing_id: listing.id,
+    termin_id: termin.id,
+    event_type: EVENT_TYPES.TERMIN_GEPLANT,
+    payload: {
+      datum,
+      uhrzeit: uhrzeit_von,
+      anzahl_interessenten: interessentIds.length,
+    },
+    source: 'user',
+    user_sichtbar: true,
+  })
 
   return { ok: true }
 }

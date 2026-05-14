@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { canAccess, type Tier } from '@/lib/tier'
 import LockedPage from '@/components/dashboard/LockedPage'
 import InteressentenClient from './InteressentenClient'
+import { logEvent } from '@/lib/activity/log'
+import { EVENT_TYPES } from '@/lib/activity/types'
 
 export const metadata = { title: 'Interessenten-CRM — Dashboard' }
 
@@ -30,6 +32,17 @@ async function createInteressent(formData: FormData): Promise<{ ok: boolean; id?
   }).select('id').single()
 
   if (error) return { ok: false, error: 'Fehler beim Speichern.' }
+
+  await logEvent({
+    user_id: user.id,
+    listing_id: listing.id,
+    interessent_id: data.id,
+    event_type: EVENT_TYPES.INTERESSENT_ANGELEGT,
+    payload: { quelle: (formData.get('quelle') as string) || 'manuell' },
+    source: 'user',
+    user_sichtbar: true,
+  })
+
   return { ok: true, id: data.id }
 }
 

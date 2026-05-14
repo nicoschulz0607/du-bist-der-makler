@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { StationStatusEntry, StationStatusMap, WizardProfile } from './types'
+import { logEvent } from '@/lib/activity/log'
+import { EVENT_TYPES } from '@/lib/activity/types'
 import { getActiveProvider } from './market-data-provider'
 import type { MarktwertDaten, LageDaten } from './market-data-provider'
 import { generiereExpose } from '@/lib/claude/expose'
@@ -52,11 +54,10 @@ export async function skipStation(stationNum: number, reason?: string): Promise<
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  const { data: existing } = await supabase
-    .from('wizard_progress')
-    .select('station_status')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const [{ data: existing }, { data: listing }] = await Promise.all([
+    supabase.from('wizard_progress').select('station_status').eq('user_id', user.id).maybeSingle(),
+    supabase.from('listings').select('id').eq('user_id', user.id).limit(1).maybeSingle(),
+  ])
 
   const statusMap: StationStatusMap = (existing?.station_status ?? {}) as StationStatusMap
   const entry: StationStatusEntry = {
@@ -72,6 +73,15 @@ export async function skipStation(stationNum: number, reason?: string): Promise<
       zuletzt_aktiv_am: new Date().toISOString(),
     })
     .eq('user_id', user.id)
+
+  await logEvent({
+    user_id: user.id,
+    listing_id: listing?.id ?? null,
+    event_type: EVENT_TYPES.WIZARD_STATION_SKIPPED,
+    payload: { station_num: stationNum, reason },
+    source: 'user',
+    user_sichtbar: false,
+  })
 }
 
 export async function markStationComplete(stationNum: number): Promise<void> {
@@ -79,11 +89,10 @@ export async function markStationComplete(stationNum: number): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
-  const { data: existing } = await supabase
-    .from('wizard_progress')
-    .select('station_status')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const [{ data: existing }, { data: listing }] = await Promise.all([
+    supabase.from('wizard_progress').select('station_status').eq('user_id', user.id).maybeSingle(),
+    supabase.from('listings').select('id').eq('user_id', user.id).limit(1).maybeSingle(),
+  ])
 
   const statusMap: StationStatusMap = (existing?.station_status ?? {}) as StationStatusMap
 
@@ -94,6 +103,15 @@ export async function markStationComplete(stationNum: number): Promise<void> {
       zuletzt_aktiv_am: new Date().toISOString(),
     })
     .eq('user_id', user.id)
+
+  await logEvent({
+    user_id: user.id,
+    listing_id: listing?.id ?? null,
+    event_type: EVENT_TYPES.WIZARD_STATION_COMPLETED,
+    payload: { station_num: stationNum },
+    source: 'user',
+    user_sichtbar: false,
+  })
 }
 
 export async function saveWizardProfile(data: Partial<WizardProfile>): Promise<void> {
@@ -418,6 +436,15 @@ export async function veroeffentlicheListing(
       zuletzt_aktiv_am: new Date().toISOString(),
     })
     .eq('user_id', user.id)
+
+  await logEvent({
+    user_id: user.id,
+    listing_id: listingId,
+    event_type: EVENT_TYPES.LISTING_VEROEFFENTLICHT,
+    payload: {},
+    source: 'user',
+    user_sichtbar: true,
+  })
 
   return { success: true, slug }
 }

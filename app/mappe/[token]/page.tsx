@@ -5,6 +5,8 @@ import { validiereShareToken } from './actions'
 import PasswordGate from './PasswordGate'
 import MappeContent from './MappeContent'
 import { redirect } from 'next/navigation'
+import { logEvent } from '@/lib/activity/log'
+import { EVENT_TYPES } from '@/lib/activity/types'
 
 function getServiceClient() {
   return createServiceClient(
@@ -59,7 +61,7 @@ export default async function MappePage({ params }: PageProps) {
   const service = getServiceClient()
   const { data: share } = await service
     .from('dokument_shares')
-    .select('id, empfaenger_name, dokument_ids, ablaufdatum, passwort_hash, zurueckgezogen_am')
+    .select('id, user_id, empfaenger_name, dokument_ids, ablaufdatum, passwort_hash, zurueckgezogen_am')
     .eq('share_token', token)
     .maybeSingle()
 
@@ -127,6 +129,17 @@ export default async function MappePage({ params }: PageProps) {
       // best-effort audit
     }
   }
+
+  await logEvent({
+    user_id: share.user_id,
+    event_type: EVENT_TYPES.MAPPE_ABGERUFEN,
+    payload: {
+      share_id: share.id,
+      empfaenger_name: share.empfaenger_name,
+    },
+    source: 'system',
+    user_sichtbar: true,
+  })
 
   // Katalog-Namen für Dokument-Typen laden
   const { DOKUMENT_KATALOG } = await import('@/lib/dokumente/katalog')
