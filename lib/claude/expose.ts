@@ -1,6 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { claudeCreate } from '@/lib/ai/anthropic'
 
 export interface ExposeInput {
   objekttyp: string | null
@@ -85,13 +83,14 @@ Antworte mit exakt diesem JSON:
 }`
 
   try {
-    const response = await anthropic.messages.create(
+    const response = await claudeCreate(
       {
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       },
+      { callSite: 'expose' },
       { signal: controller.signal }
     )
 
