@@ -64,10 +64,13 @@ export function useKlaraChat(initialConvId?: string) {
           const body = await res.json().catch(() => ({}))
           if (res.status === 429) {
             setError(body.message ?? 'Tageslimit erreicht. Morgen geht\'s weiter.')
+          } else if (res.status === 401) {
+            setError('Deine Sitzung ist abgelaufen. Bitte lade die Seite neu.')
           } else {
             setError('Klara hat gerade ein Problem. Bitte versuche es erneut.')
           }
-          setMessages((prev) => prev.slice(0, -1))
+          // Beide Nachrichten entfernen (User + leerer Assistent-Placeholder)
+          setMessages((prev) => prev.slice(0, -2))
           setStreaming(false)
           return
         }
@@ -104,7 +107,7 @@ export function useKlaraChat(initialConvId?: string) {
         }
       } catch {
         setError('Verbindungsfehler. Bitte prüfe deine Internetverbindung.')
-        setMessages((prev) => prev.slice(0, -1))
+        setMessages((prev) => prev.slice(0, -2))
       } finally {
         setStreaming(false)
       }
