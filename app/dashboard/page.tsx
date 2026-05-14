@@ -17,8 +17,11 @@ import { redirect } from 'next/navigation'
 import { canAccess, getUpgradeTarget, getUpgradeText, type Tier } from '@/lib/tier'
 import { CHECKLIST } from '@/lib/checklist'
 import FeatureCard from '@/components/dashboard/FeatureCard'
+import SmartCTACard from '@/components/dashboard/SmartCTACard'
 import OnboardingModal from '@/components/wizard/OnboardingModal'
 import ReentryBanner from '@/components/wizard/ReentryBanner'
+import { getKlaraContext } from '@/lib/klara/context'
+import { getPrimarySignal } from '@/lib/klara/triggers'
 
 function differenceInDays(from: Date, to: Date): number {
   return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
@@ -62,12 +65,19 @@ export default async function DashboardPage() {
   const upgradeInfo = getUpgradeText(tier)
   const upgradeTarget = getUpgradeTarget(tier)
 
+  const klaraContext = await getKlaraContext(user.id)
+  const primarySignal = getPrimarySignal(klaraContext)
+
   return (
     <div className="space-y-7">
       <OnboardingModal show={showOnboarding} />
 
       {wizardProgress && !wizardProgress.abgeschlossen_am && bannerDismissals < 3 && (
         <ReentryBanner station={wizardProgress.aktuelle_station} totalStations={12} />
+      )}
+
+      {primarySignal && (
+        <SmartCTACard signal={primarySignal} />
       )}
 
       {/* Status-Banner */}
