@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Compass,
   FolderOpen,
+  Star,
 } from 'lucide-react'
 import { canAccess, getTierLabel, type Tier } from '@/lib/tier'
 import { createClient } from '@/lib/supabase/client'
@@ -158,15 +159,10 @@ export default function Sidebar({ tier, vorname }: SidebarProps) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-semibold text-text-primary truncate">{vorname ?? 'Nutzer'}</p>
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-              tier === 'premium'
-                ? 'bg-amber-100 text-amber-700'
-                : tier === 'pro'
-                ? 'bg-purple-100 text-purple-700'
-                : 'bg-accent-light text-accent'
-            }`}>
-              {tierLabel}
-            </span>
+            <div className="flex items-center gap-1 text-[11px] text-text-secondary">
+              <Star size={10} fill="currentColor" className="text-[#1B6B45]" />
+              <span>{tierLabel}</span>
+            </div>
           </div>
         </div>
 
