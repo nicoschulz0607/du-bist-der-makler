@@ -1,0 +1,13 @@
+-- ⚠️ WARNUNG: Diese Datei ist NUR ein Placeholder.
+-- Das echte SQL dieser Migration ist NICHT hier.
+--
+-- Bei `npx supabase db reset` würde diese Migration nichts tun
+-- und die DB hätte NICHT das tatsächliche Schema von diesem Datum.
+--
+-- Falls dieses Repo neu aufgesetzt wird: schau im Supabase Studio
+-- in der Migrations-Sektion nach dem echten SQL und füge es hier ein.
+--
+-- Siehe _baseline-readme.md für Hintergrund.
+
+-- Timestamp: 20260509200717
+-- Datum: 2026-05-09 20:07:17
