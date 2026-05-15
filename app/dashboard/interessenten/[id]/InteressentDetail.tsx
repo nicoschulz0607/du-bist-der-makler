@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2, AlertCircle, Star, Loader2, ChevronDown } from
 import Link from 'next/link'
 import { canAccess, type Tier } from '@/lib/tier'
 import KiScoreCard from './KiScoreCard'
+import HabeGeantwortetButton from '@/components/interessenten/HabeGeantwortetButton'
 
 const inputBase =
   'w-full rounded-[8px] border border-[#DDDDDD] px-4 min-h-[48px] text-[14px] text-text-primary bg-white outline-none transition-all focus:ring-2 focus:ring-accent focus:border-transparent placeholder:text-text-tertiary'
@@ -121,6 +122,12 @@ export default function InteressentDetail({ interessent: int, termine, tier, onS
           {int.email && <p className="text-[13px] text-text-secondary mt-0.5">{int.email}</p>}
         </div>
       </div>
+
+      {/* Habe geantwortet */}
+      <HabeGeantwortetButton
+        interessentId={int.id}
+        antwortetAm={int.antwortet_am ?? null}
+      />
 
       {/* Save feedback */}
       {saved && (
