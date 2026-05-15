@@ -3,7 +3,9 @@ import {
   Home,
   ArrowRight,
   Circle,
+  Image as ImageIcon,
 } from 'lucide-react'
+import { normalizeFotos } from '@/lib/foto'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { canAccess, getUpgradeTarget, getUpgradeText, type Tier } from '@/lib/tier'
@@ -17,6 +19,19 @@ import { getRecentEvents } from '@/lib/activity/log'
 import ActivityTimeline from '@/components/dashboard/ActivityTimeline'
 import PortalPerformance from '@/components/dashboard/PortalPerformance'
 import DashboardStats from '@/components/dashboard/DashboardStats'
+
+function formatAdresse(l: { adresse_strasse?: string | null; adresse_plz?: string | null; adresse_ort?: string | null }): string {
+  const parts: string[] = []
+  if (l.adresse_strasse) parts.push(l.adresse_strasse)
+  const plzOrt = [l.adresse_plz, l.adresse_ort].filter(Boolean).join(' ')
+  if (plzOrt) parts.push(plzOrt)
+  return parts.join(', ')
+}
+
+function formatPreis(preis?: number | null): string {
+  if (!preis) return '— €'
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(preis)
+}
 
 function StatusBadge({ status }: { status: string }) {
   const CONFIG: Record<string, { label: string; color: string; pulse: boolean }> = {
@@ -56,6 +71,7 @@ export default async function DashboardPage() {
 
   const profile = profileRes.data
   const listing = listingRes.data
+  const hauptfoto = listing?.fotos ? normalizeFotos(listing.fotos as unknown)[0]?.url ?? null : null
   const checkItems = checkRes.data ?? []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const profileRaw = profile as any
@@ -124,36 +140,46 @@ export default async function DashboardPage() {
         </div>
       ) : null}
 
-      {/* Listing-Vorschau / Empty State */}
+      {/* Mein Objekt */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[17px] font-bold text-text-primary" style={{ letterSpacing: '-0.18px' }}>Mein Objekt</h2>
-          <Link href="/dashboard/objekt" className="text-[13px] font-semibold text-accent hover:underline">
-            {listing ? 'Bearbeiten' : 'Anlegen'} →
-          </Link>
-        </div>
-
         {listing ? (
-          <Link href="/dashboard/objekt" className="block bg-white border border-[#DDDDDD] rounded-xl p-5 hover:border-accent hover:shadow-sm transition-all duration-150">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[15px] font-semibold text-text-primary">
-                  {listing.objekttyp ?? 'Immobilie'}
-                </p>
-                {listing.adresse_strasse && (
-                  <p className="text-[13px] text-text-secondary mt-0.5">
-                    {listing.adresse_strasse}, {listing.adresse_plz} {listing.adresse_ort}
-                  </p>
-                )}
-                {listing.preis && (
-                  <p className="text-[18px] font-bold text-accent mt-2" style={{ letterSpacing: '-0.18px' }}>
-                    {listing.preis.toLocaleString('de-DE')} €
-                  </p>
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-stretch">
+              <div className="w-full sm:w-[200px] h-[200px] sm:h-[160px] flex-shrink-0 bg-gray-100 relative">
+                {hauptfoto ? (
+                  <img src={hauptfoto} alt="Hauptfoto" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <ImageIcon size={32} strokeWidth={1.5} />
+                  </div>
                 )}
               </div>
-              <StatusBadge status={listing.status ?? 'draft'} />
+              <div className="flex-1 p-5 flex flex-col justify-between min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-[18px] font-semibold text-text-primary truncate">
+                      {listing.objekttyp ?? 'Mein Objekt'}
+                    </h3>
+                    <p className="text-[13px] text-text-secondary mt-1 truncate">
+                      {formatAdresse(listing)}
+                    </p>
+                  </div>
+                  <StatusBadge status={listing.status ?? 'draft'} />
+                </div>
+                <div className="flex items-end justify-between mt-3">
+                  <p className="text-[22px] font-semibold text-accent">
+                    {formatPreis(listing.preis)}
+                  </p>
+                  <Link
+                    href="/dashboard/objekt"
+                    className="text-[13px] font-medium text-accent hover:opacity-80"
+                  >
+                    Bearbeiten →
+                  </Link>
+                </div>
+              </div>
             </div>
-          </Link>
+          </div>
         ) : (
           <div className="bg-white border border-[#DDDDDD] rounded-xl p-10 flex flex-col items-center text-center">
             <Home size={40} className="text-[#DDDDDD] mb-4" strokeWidth={1.5} />
@@ -167,7 +193,6 @@ export default async function DashboardPage() {
             </Link>
           </div>
         )}
-
       </div>
 
       {listing && (
