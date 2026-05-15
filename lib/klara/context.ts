@@ -192,10 +192,10 @@ export async function getKlaraContext(userId: string): Promise<KlaraContext> {
       if (!listingId) return []
       const { data } = await supabase
         .from('interessenten')
-        .select('id, name, status, created_at')
+        .select('id, name, status, created_at, antwortet_am')
         .eq('listing_id', listingId)
-      return (data ?? []) as Array<{ id: string; name: string; status: string; created_at: string }>
-    }, [] as Array<{ id: string; name: string; status: string; created_at: string }>),
+      return (data ?? []) as Array<{ id: string; name: string; status: string; created_at: string; antwortet_am: string | null }>
+    }, [] as Array<{ id: string; name: string; status: string; created_at: string; antwortet_am: string | null }>),
 
     safe(async () => {
       const heute = now.toISOString().split('T')[0]
@@ -306,7 +306,7 @@ export async function getKlaraContext(userId: string): Promise<KlaraContext> {
   }
 
   const unbeantwortete = interessentenRaw
-    .filter((i) => !UNBEANTWORTET_EXCLUDE.has(i.status))
+    .filter((i) => i.antwortet_am === null && !UNBEANTWORTET_EXCLUDE.has(i.status))
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
   const aelteste = unbeantwortete[0] ?? null

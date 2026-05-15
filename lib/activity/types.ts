@@ -8,6 +8,7 @@ export const EVENT_TYPES = {
   DOKUMENT_HOCHGELADEN:         'dokument_hochgeladen',
   MAPPE_GETEILT:                'mappe_geteilt',
   MAPPE_ABGERUFEN:              'mappe_abgerufen',
+  INTERESSENT_BEANTWORTET:      'interessent_beantwortet',
 } as const
 
 export type EventType = typeof EVENT_TYPES[keyof typeof EVENT_TYPES]

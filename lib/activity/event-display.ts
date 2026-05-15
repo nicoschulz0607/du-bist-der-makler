@@ -112,6 +112,18 @@ export function resolveEventDisplay(event: ActivityEvent): EventDisplay | null {
       }
     }
 
+    case EVENT_TYPES.INTERESSENT_BEANTWORTET: {
+      const name = (event.payload?.name as string) ?? null
+      return {
+        icon: CheckCircle2,
+        iconColor: 'accent',
+        titel: name ? `Anfrage beantwortet: ${name}` : 'Anfrage beantwortet',
+        link: event.interessent_id
+          ? `/dashboard/interessenten/${event.interessent_id}`
+          : undefined,
+      }
+    }
+
     case EVENT_TYPES.WIZARD_STATION_COMPLETED:
     case EVENT_TYPES.WIZARD_STATION_SKIPPED:
       return null
