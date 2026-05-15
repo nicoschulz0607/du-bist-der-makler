@@ -10,7 +10,8 @@ import type { PortalCardData } from '@/lib/portals/queries'
 export default function PortalCard({ data }: { data: PortalCardData }) {
   const [logoError, setLogoError] = useState(false)
   const statusInfo = STATUS_DISPLAY[data.status]
-  const logoUrl = getBrandLogoUrl(data.domain, { variant: 'logo', width: 400 })
+  const logoTheme = data.slug === 'immoscout' ? 'light' : undefined
+  const logoUrl = getBrandLogoUrl(data.domain, { variant: 'logo', width: 400, theme: logoTheme })
   const showLogo = logoUrl && !logoError
 
   return (
