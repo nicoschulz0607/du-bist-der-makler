@@ -2,7 +2,6 @@ import Link from 'next/link'
 import {
   Home,
   ArrowRight,
-  CheckCircle2,
   Circle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -18,6 +17,27 @@ import { getRecentEvents } from '@/lib/activity/log'
 import ActivityTimeline from '@/components/dashboard/ActivityTimeline'
 import PortalPerformance from '@/components/dashboard/PortalPerformance'
 import DashboardStats from '@/components/dashboard/DashboardStats'
+
+function StatusBadge({ status }: { status: string }) {
+  const CONFIG: Record<string, { label: string; color: string; pulse: boolean }> = {
+    aktiv:    { label: 'Live',     color: '#1B6B45', pulse: true  },
+    draft:    { label: 'Entwurf',  color: '#6B7280', pulse: false },
+    verkauft: { label: 'Verkauft', color: '#1B6B45', pulse: false },
+  }
+  const cfg = CONFIG[status] ?? { label: status, color: '#6B7280', pulse: false }
+  return (
+    <span
+      className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium"
+      style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}
+    >
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${cfg.pulse ? 'animate-pulse' : ''}`}
+        style={{ backgroundColor: cfg.color }}
+      />
+      {cfg.label}
+    </span>
+  )
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -68,20 +88,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Status-Banner */}
-      {listing?.status === 'aktiv' ? (
-        <div className="flex items-center justify-between gap-4 bg-white border border-[#DDDDDD] rounded-xl px-5 py-2.5">
-          <div className="flex items-center gap-3">
-            <CheckCircle2 size={18} className="text-accent flex-shrink-0" strokeWidth={2} />
-            <p className="text-[14px] font-semibold text-accent">Dein Inserat ist live!</p>
-          </div>
-          <Link
-            href="/dashboard/objekt"
-            className="flex-shrink-0 inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent hover:underline"
-          >
-            Ansehen <ArrowRight size={14} />
-          </Link>
-        </div>
-      ) : listing?.status === 'draft' ? (
+      {listing?.status === 'draft' ? (
         <div className="flex items-center justify-between gap-4 bg-[#FFF4E0] border border-[#C07000] rounded-xl px-5 py-4">
           <div className="flex items-center gap-3">
             <Circle size={20} className="text-[#C07000] flex-shrink-0" strokeWidth={2} />
@@ -99,7 +106,7 @@ export default async function DashboardPage() {
             Weiter <ArrowRight size={14} />
           </Link>
         </div>
-      ) : (
+      ) : !listing ? (
         <div className="flex items-center justify-between gap-4 bg-surface border border-[#DDDDDD] rounded-xl px-5 py-4">
           <div className="flex items-center gap-3">
             <Home size={20} className="text-text-secondary flex-shrink-0" strokeWidth={1.75} />
@@ -115,7 +122,7 @@ export default async function DashboardPage() {
             Jetzt anlegen <ArrowRight size={14} />
           </Link>
         </div>
-      )}
+      ) : null}
 
       {/* Listing-Vorschau / Empty State */}
       <div>
@@ -144,15 +151,7 @@ export default async function DashboardPage() {
                   </p>
                 )}
               </div>
-              <span className={`flex-shrink-0 text-[12px] font-semibold px-2.5 py-1 rounded-full ${
-                listing.status === 'aktiv'
-                  ? 'bg-[#E8F5EE] text-accent'
-                  : listing.status === 'verkauft'
-                  ? 'bg-surface text-text-secondary'
-                  : 'bg-[#FFF4E0] text-[#C07000]'
-              }`}>
-                {listing.status === 'aktiv' ? 'Aktiv' : listing.status === 'verkauft' ? 'Verkauft' : 'Entwurf'}
-              </span>
+              <StatusBadge status={listing.status ?? 'draft'} />
             </div>
           </Link>
         ) : (
