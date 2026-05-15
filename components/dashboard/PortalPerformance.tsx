@@ -12,7 +12,7 @@ export default async function PortalPerformance({ listingId, userId }: Props) {
   if (portals.length === 0) return null
 
   return (
-    <div>
+    <div id="portal-performance" className="scroll-mt-4">
       <h2 className="text-[15px] font-semibold text-text-primary mb-3">
         Portal-Performance
       </h2>

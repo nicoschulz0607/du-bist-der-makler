@@ -17,10 +17,7 @@ import { getPrimarySignal } from '@/lib/klara/triggers'
 import { getRecentEvents } from '@/lib/activity/log'
 import ActivityTimeline from '@/components/dashboard/ActivityTimeline'
 import PortalPerformance from '@/components/dashboard/PortalPerformance'
-
-function differenceInDays(from: Date, to: Date): number {
-  return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24))
-}
+import DashboardStats from '@/components/dashboard/DashboardStats'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -49,10 +46,6 @@ export default async function DashboardPage() {
 
   const totalItems = CHECKLIST.flatMap((p) => p.items).length
   const completedCount = checkItems.filter((i) => i.completed).length
-
-  const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date()
-  const expiresAt = new Date(createdAt.getTime() + 180 * 24 * 60 * 60 * 1000)
-  const daysLeft = differenceInDays(new Date(), expiresAt)
 
   const upgradeInfo = getUpgradeText(tier)
   const upgradeTarget = getUpgradeTarget(tier)
@@ -176,13 +169,11 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {listing && (
-          <p className="text-[12px] text-text-tertiary mt-2">
-            Laufzeit: noch {daysLeft > 0 ? daysLeft : 0} von 180 Tagen
-            {daysLeft < 30 && <span className="text-[#C07000] font-semibold ml-1">(läuft bald ab)</span>}
-          </p>
-        )}
       </div>
+
+      {listing && (
+        <DashboardStats listingId={listing.id} userId={user.id} />
+      )}
 
       <ActivityTimeline events={recentEvents} />
 
