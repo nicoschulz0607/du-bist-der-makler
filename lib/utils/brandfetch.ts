@@ -1,9 +1,10 @@
 const BRANDFETCH_CDN = 'https://cdn.brandfetch.io'
 
 interface LogoOptions {
+  variant?: 'icon' | 'logo' | 'symbol'
   size?: number
+  width?: number
   theme?: 'light' | 'dark'
-  type?: 'logo' | 'icon' | 'symbol'
 }
 
 /**
@@ -17,19 +18,21 @@ export function getBrandLogoUrl(domain: string, opts: LogoOptions = {}): string 
     return ''
   }
 
-  const { size = 40, theme, type = 'icon' } = opts
-  const retinaSize = size * 2
+  const { variant = 'icon', size = 40, width, theme } = opts
 
-  const segments: string[] = [
-    BRANDFETCH_CDN,
-    'domain',
-    domain,
-    'h', String(retinaSize),
-    'w', String(retinaSize),
-  ]
+  const segments: string[] = [BRANDFETCH_CDN, 'domain', domain]
 
-  if (theme) segments.push('theme', theme)
-  segments.push(type)
+  if (variant === 'logo') {
+    segments.push('w', String(width ?? 400))
+  } else {
+    const retinaSize = size * 2
+    segments.push('h', String(retinaSize), 'w', String(retinaSize))
+  }
+
+  const effectiveTheme = theme ?? (variant === 'logo' ? 'light' : undefined)
+  if (effectiveTheme) segments.push('theme', effectiveTheme)
+
+  segments.push(variant)
 
   return `${segments.join('/')}?c=${clientId}`
 }
