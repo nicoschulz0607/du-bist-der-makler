@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Bell, PenSquare } from 'lucide-react'
+import { PenSquare } from 'lucide-react'
 import { type Tier } from '@/lib/tier'
+import NotificationBell from './NotificationBell'
+import type { TriggerSignal } from '@/lib/klara/triggers'
 
 function buildGreeting(name: string): string {
   const h = new Date().getHours()
@@ -15,9 +17,10 @@ function buildGreeting(name: string): string {
 interface TopbarProps {
   vorname: string
   tier: Tier
+  signals: TriggerSignal[]
 }
 
-export default function Topbar({ vorname, tier }: TopbarProps) {
+export default function Topbar({ vorname, tier, signals }: TopbarProps) {
   const name = vorname ?? 'du'
   // Stable SSR value; replaced after hydration to avoid server/client time mismatch
   const [greeting, setGreeting] = useState(`Hallo, ${name} 👋`)
@@ -35,13 +38,7 @@ export default function Topbar({ vorname, tier }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface transition-colors duration-150 text-text-secondary"
-          aria-label="Benachrichtigungen"
-        >
-          <Bell size={18} strokeWidth={1.5} />
-        </button>
+        <NotificationBell signals={signals} />
 
         <Link
           href="/dashboard/objekt"
