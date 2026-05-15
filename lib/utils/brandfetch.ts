@@ -29,8 +29,7 @@ export function getBrandLogoUrl(domain: string, opts: LogoOptions = {}): string 
     segments.push('h', String(retinaSize), 'w', String(retinaSize))
   }
 
-  const effectiveTheme = theme ?? (variant === 'logo' ? 'light' : undefined)
-  if (effectiveTheme) segments.push('theme', effectiveTheme)
+  if (theme) segments.push('theme', theme)
 
   segments.push(variant)
 
