@@ -60,12 +60,15 @@ export default function InteressentCard({ interessent, open, activeTab, tier, on
 
   return (
     <div
+      onClick={!open ? onToggle : undefined}
       className={`bg-white rounded-xl overflow-hidden transition-all ${
-        open ? 'border-2 border-[#1B6B45]/30' : 'border border-gray-200'
+        open
+          ? 'border-2 border-[#1B6B45]/30'
+          : 'border border-gray-200 cursor-pointer hover:border-gray-300 hover:shadow-sm'
       }`}
     >
       <div className="p-4">
-        {/* Name + Status + Kontakt + Score + Zeit */}
+        {/* Header: Name + Status | Score + Zeit + Chevron */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
             {unbeantwortet && (
@@ -86,6 +89,8 @@ export default function InteressentCard({ interessent, open, activeTab, tier, on
               </p>
             </div>
           </div>
+
+          {/* Score + Zeit + Chevron */}
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
             {interessent.ki_score != null && (
               <span
@@ -95,9 +100,18 @@ export default function InteressentCard({ interessent, open, activeTab, tier, on
                 ⚡ {interessent.ki_score as number}/10
               </span>
             )}
-            <span className="text-[11px] text-text-tertiary">
-              {formatRelative(interessent.created_at as string)}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-text-tertiary">
+                {formatRelative(interessent.created_at as string)}
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggle() }}
+                className="text-text-tertiary hover:text-text-primary transition-colors"
+                aria-label={open ? 'Schließen' : 'Details'}
+              >
+                {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -126,45 +140,25 @@ export default function InteressentCard({ interessent, open, activeTab, tier, on
           </div>
         </div>
 
-        {/* Preview + Toggle-Button */}
-        {!open && (
-          <div className="flex items-center justify-between mt-3">
-            {interessent.nachricht ? (
-              <p className="text-[12px] text-text-tertiary italic truncate flex-1 mr-2">
-                &ldquo;{(interessent.nachricht as string).slice(0, 80)}
-                {(interessent.nachricht as string).length > 80 ? '…' : ''}&rdquo;
-              </p>
-            ) : (
-              <div className="flex-1" />
-            )}
-            <button
-              onClick={onToggle}
-              className="flex items-center gap-1 text-[12px] text-accent hover:opacity-80 flex-shrink-0"
-            >
-              Details <ChevronDown size={14} />
-            </button>
-          </div>
-        )}
-
-        {open && (
-          <div className="flex justify-end mt-3">
-            <button
-              onClick={onToggle}
-              className="flex items-center gap-1 text-[12px] text-text-secondary hover:text-text-primary"
-            >
-              Schließen <ChevronUp size={14} />
-            </button>
-          </div>
+        {/* Nachricht-Preview (nur wenn geschlossen) */}
+        {!open && !!interessent.nachricht && (
+          <p className="text-[12px] text-text-tertiary italic truncate mt-2">
+            &ldquo;{(interessent.nachricht as string).slice(0, 100)}
+            {(interessent.nachricht as string).length > 100 ? '…' : ''}&rdquo;
+          </p>
         )}
       </div>
 
+      {/* Aufgeklappter Bereich — Klicks stoppen Propagation zur Karte */}
       {open && (
-        <InteressentTabs
-          interessent={interessent}
-          activeTab={activeTab}
-          tier={tier}
-          onTabChange={onTabChange}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <InteressentTabs
+            interessent={interessent}
+            activeTab={activeTab}
+            tier={tier}
+            onTabChange={onTabChange}
+          />
+        </div>
       )}
     </div>
   )
