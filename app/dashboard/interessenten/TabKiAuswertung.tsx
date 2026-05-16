@@ -1,15 +1,33 @@
-import { Sparkles } from 'lucide-react'
+'use client'
+
+import KiScoreCard from '@/app/dashboard/interessenten/[id]/KiScoreCard'
+import { canAccess, type Tier } from '@/lib/tier'
 
 interface Props {
   interessent: Record<string, unknown>
   tier: string
 }
 
-export default function TabKiAuswertung({ interessent: _interessent, tier: _tier }: Props) {
+export default function TabKiAuswertung({ interessent, tier }: Props) {
+  const canScore =
+    canAccess(tier as Tier, 'pro') &&
+    !!interessent.finanzierung_status &&
+    !!interessent.zeithorizont
+
   return (
-    <div className="flex flex-col items-center gap-3 py-8 text-center">
-      <Sparkles size={24} className="text-text-tertiary" />
-      <p className="text-[13px] text-text-secondary font-medium">KI-Auswertung wird in Commit 2 implementiert.</p>
-    </div>
+    <KiScoreCard
+      interessentId={interessent.id as string}
+      score={interessent.ki_score as number | null}
+      ampel={interessent.ki_ampel as string | null}
+      begruendung={interessent.ki_begruendung as string | null}
+      klaerungsfragen={(interessent.ki_klaerungsfragen as string[]) ?? []}
+      redFlags={(interessent.ki_red_flags as string[]) ?? []}
+      basisFelder={interessent.ki_score_basis_felder as number | null}
+      aktualisiert={interessent.ki_score_aktualisiert_am as string | null}
+      canScore={canScore}
+      tier={tier as Tier}
+      finanzierungSet={!!interessent.finanzierung_status}
+      zeithorizontSet={!!interessent.zeithorizont}
+    />
   )
 }
