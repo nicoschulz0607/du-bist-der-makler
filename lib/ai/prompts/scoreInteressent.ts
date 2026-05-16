@@ -10,6 +10,24 @@ WICHTIG — Was du bewerten DARFST:
 - Passung Haushaltsgröße zu Objektgröße (sachlich, nicht wertend)
 - Erfahrungsgrad (andere besichtigte Objekte, professioneller Umgang)
 - Eindruck aus dem Erstgespräch (was der Verkäufer beobachtet hat)
+- Vom Verkäufer bestätigte Bonität und abgegebenes Angebot (hohes Gewicht)
+
+BONITÄT-REGEL (vom Verkäufer manuell gesetzt, nicht vom Interessenten):
+- bonitaet = "bestaetigt": Der Verkäufer hat einen Nachweis gesehen (Bank-Zusage, Eigenkapital-Beleg o. ä.).
+  → Score-Boost +2 bis +3 Punkte. Eigenkapital-Red-Flags entfallen, da Bonität extern bestätigt wurde.
+  → bonitaet_notiz liefert Kontext: "Bankzusage liegt vor, 120k EK" stärkt die Bestätigung;
+    "nur mündliche Aussage" relativiert sie leicht.
+- bonitaet = "unklar": Noch kein Beleg vorhanden. Keine Score-Anpassung durch Bonität.
+- bonitaet = "kritisch": Verkäufer hat konkrete Bedenken (widersprüchliche Selbstauskunft etc.).
+  → Score-Abzug -2 Punkte. Als Red Flag im red_flags-Array erwähnen.
+- bonitaet = null / nicht gesetzt: Bonität wurde nicht bewertet. Ignorieren, keine Annahme treffen.
+
+ANGEBOT-REGEL (abgegebenes_angebot, falls gesetzt):
+- Ein vorliegendes Angebot zeigt konkrete Kaufabsicht — immer ein positives Signal.
+- Angebot ≥ 95 % des Listing-Preises: starker Score-Boost (+1 bis +2).
+- Angebot 80–94 % des Listing-Preises: leichter Score-Boost (+1), Marker "Verhandlung wahrscheinlich" in begruendung.
+- Angebot < 80 % des Listing-Preises: kleiner Boost für Kaufabsicht, aber Red Flag "Angebot deutlich unter Preis".
+- Kein Angebot: Keine Anpassung.
 
 WICHTIG — Was du NIEMALS in deine Bewertung einbeziehst:
 - Alter (außer es geht um Finanzierungs-Tragfähigkeit über Laufzeit, dann nur sachlich)
@@ -50,8 +68,19 @@ export function buildScoreUserPrompt(params: {
   andere_objekte_besichtigt: string | null
   eindruck_erstgespraech: string | null
   nachricht: string | null
+  bonitaet: string | null
+  bonitaet_notiz: string | null
+  abgegebenes_angebot: number | null
 }): string {
-  const na = (v: string | number | null) => v ?? 'keine Angabe'
+  const na = (v: string | number | null | undefined) => (v != null && v !== '') ? v : 'keine Angabe'
+
+  const bonitaetLine = params.bonitaet
+    ? `- Bonität (vom Verkäufer bestätigt): ${params.bonitaet}${params.bonitaet_notiz ? ` — Notiz: "${params.bonitaet_notiz}"` : ''}`
+    : `- Bonität: nicht bewertet`
+
+  const angebotLine = params.abgegebenes_angebot != null
+    ? `- Abgegebenes Angebot: ${params.abgegebenes_angebot.toLocaleString('de-DE')} € (Listing-Preis: ${na(params.preis)} €)`
+    : `- Abgegebenes Angebot: keines`
 
   return `Objekt:
 - Typ: ${na(params.objekttyp)}
@@ -72,6 +101,8 @@ Interessent:
 - Andere besichtigte Objekte: ${na(params.andere_objekte_besichtigt)}
 - Eindruck aus Erstgespräch: ${na(params.eindruck_erstgespraech)}
 - Ursprüngliche Nachricht: ${na(params.nachricht)}
+${bonitaetLine}
+${angebotLine}
 
 Bewerte diesen Interessenten nach den Regeln in deinem System-Prompt.`
 }
