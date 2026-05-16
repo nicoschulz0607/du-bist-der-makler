@@ -1,5 +1,3 @@
-import Link from 'next/link'
-import { ExternalLink } from 'lucide-react'
 import HabeGeantwortetButton from '@/components/interessenten/HabeGeantwortetButton'
 
 interface Props {
@@ -28,14 +26,6 @@ export default function TabNachricht({ interessent }: Props) {
           Keine Nachricht hinterlegt.
         </p>
       )}
-
-      <Link
-        href={`/dashboard/interessenten/${interessent.id as string}`}
-        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent hover:opacity-80"
-      >
-        <ExternalLink size={12} />
-        Vollbild bearbeiten
-      </Link>
     </div>
   )
 }
