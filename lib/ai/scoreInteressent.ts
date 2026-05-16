@@ -26,6 +26,7 @@ export async function scoreInteressent(interessentId: string): Promise<{ ok: tru
       id, name, email, nachricht, beruf, haushalt, wohnsituation_aktuell,
       finanzierung_status, eigenkapital_range, zeithorizont, motivation,
       andere_objekte_besichtigt, eindruck_erstgespraech,
+      bonitaet, bonitaet_notiz, abgegebenes_angebot,
       listing_id,
       listings!inner(objekttyp, preis, wohnflaeche_qm, zimmer, adresse_plz, adresse_ort, zustand, user_id)
     `)
@@ -42,6 +43,7 @@ export async function scoreInteressent(interessentId: string): Promise<{ ok: tru
     int.finanzierung_status, int.eigenkapital_range, int.zeithorizont,
     int.haushalt, int.beruf, int.wohnsituation_aktuell,
     int.motivation, int.andere_objekte_besichtigt, int.eindruck_erstgespraech,
+    int.bonitaet,
   ]
   const basisFelder = relevantFields.filter(Boolean).length
 
@@ -63,6 +65,9 @@ export async function scoreInteressent(interessentId: string): Promise<{ ok: tru
     andere_objekte_besichtigt: int.andere_objekte_besichtigt,
     eindruck_erstgespraech: int.eindruck_erstgespraech,
     nachricht: int.nachricht,
+    bonitaet: int.bonitaet,
+    bonitaet_notiz: int.bonitaet_notiz,
+    abgegebenes_angebot: int.abgegebenes_angebot,
   })
 
   try {
