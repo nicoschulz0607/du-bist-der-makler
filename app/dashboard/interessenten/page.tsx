@@ -66,7 +66,7 @@ export default async function InteressentenPage({
 
   const [{ data: profile }, { data: listing }] = await Promise.all([
     supabase.from('profiles').select('paket_tier').eq('id', user.id).single(),
-    supabase.from('listings').select('id').eq('user_id', user.id).limit(1).maybeSingle(),
+    supabase.from('listings').select('id, preis').eq('user_id', user.id).limit(1).maybeSingle(),
   ])
 
   const tier = (profile?.paket_tier ?? null) as Tier
@@ -103,6 +103,7 @@ export default async function InteressentenPage({
       tab={params.tab ?? 'nachricht'}
       tier={tier ?? 'starter'}
       listingId={listing?.id ?? ''}
+      listingPreis={(listing as any)?.preis ?? null}
       onCreate={createInteressent}
     />
   )

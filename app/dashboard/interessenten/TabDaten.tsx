@@ -101,6 +101,7 @@ export default function TabDaten({ interessent }: Props) {
         status: (fd.get('status') as string) || undefined,
         bonitaet: (fd.get('bonitaet') as string) || undefined,
         bonitaet_notiz: (fd.get('bonitaet_notiz') as string) || undefined,
+        bankbestaetigung: fd.get('bankbestaetigung') === 'on',
         abgegebenes_angebot: (fd.get('abgegebenes_angebot') as string) || undefined,
         altersgruppe: (fd.get('altersgruppe') as string) || undefined,
         beruf: (fd.get('beruf') as string) || undefined,
@@ -122,6 +123,8 @@ export default function TabDaten({ interessent }: Props) {
     setResetKey(k => k + 1)
     setFeedback(null)
   }
+
+  const bankbestaetigungDefault = (interessent.bankbestaetigung as boolean) ?? false
 
   return (
     <form key={resetKey} onSubmit={handleSubmit} className="space-y-4">
@@ -184,6 +187,16 @@ export default function TabDaten({ interessent }: Props) {
         )}
       </div>
 
+      <label className="flex items-center gap-2.5 cursor-pointer select-none">
+        <input
+          name="bankbestaetigung"
+          type="checkbox"
+          defaultChecked={bankbestaetigungDefault}
+          className="w-4 h-4 rounded accent-[#1B6B45] cursor-pointer"
+        />
+        <span className="text-[13px] text-text-primary font-medium">Bankbestätigung liegt vor</span>
+      </label>
+
       <div>
         <label className={labelBase}>Aktuelles Angebot</label>
         <div className="relative">
@@ -200,6 +213,9 @@ export default function TabDaten({ interessent }: Props) {
             €
           </span>
         </div>
+        <p className="text-[11px] text-text-tertiary mt-1">
+          Änderungen werden automatisch in der Verhandlungs-Historie gespeichert.
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
