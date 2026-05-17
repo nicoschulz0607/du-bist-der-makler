@@ -28,11 +28,13 @@ export async function saveInteressent(interessentId: string, data: SaveData) {
     if (!data.name?.trim()) return { error: 'Name ist Pflicht' }
 
     // Alten Wert laden um Angebot-Änderung zu erkennen
-    const { data: old } = await supabase
+    const { data: old, error: oldError } = await supabase
       .from('interessenten')
       .select('abgegebenes_angebot, bonitaet, bonitaet_notiz, bankbestaetigung, listing_id')
       .eq('id', interessentId)
       .single()
+
+    if (oldError) console.error('[saveInteressent] old select:', oldError.message)
 
     const neuesAngebot = data.abgegebenes_angebot ? Number(data.abgegebenes_angebot) : null
     const altesAngebot = old?.abgegebenes_angebot ?? null
@@ -59,7 +61,7 @@ export async function saveInteressent(interessentId: string, data: SaveData) {
 
     // Angebot-Änderung → History-Eintrag
     if (neuesAngebot && neuesAngebot !== altesAngebot && old?.listing_id) {
-      await supabase.from('angebots_historie').insert({
+      const { error: histError } = await supabase.from('angebots_historie').insert({
         interessent_id: interessentId,
         listing_id: old.listing_id,
         betrag: neuesAngebot,
@@ -67,6 +69,7 @@ export async function saveInteressent(interessentId: string, data: SaveData) {
         bonitaet_notiz_snapshot: old.bonitaet_notiz ?? null,
         bankbestaetigung_snapshot: old.bankbestaetigung ?? false,
       })
+      if (histError) console.error('[saveInteressent] history insert:', histError.message)
     }
 
     const { error } = await supabase
