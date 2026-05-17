@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react'
 import InteressentCard from './InteressentCard'
 import FilterTabs from './FilterTabs'
 import InteressentCreateModal from './InteressentCreateModal'
+import TopAngeboteSektion from './TopAngeboteSektion'
 
 type Interessent = Record<string, unknown>
 
@@ -16,6 +17,7 @@ interface Props {
   tab: string
   tier: string
   listingId: string
+  listingPreis: number | null
   onCreate: (formData: FormData) => Promise<{ ok: boolean; id?: string; error?: string }>
 }
 
@@ -44,6 +46,7 @@ export default function InteressentenListe({
   filter,
   tab,
   tier,
+  listingPreis,
   onCreate,
 }: Props) {
   const router = useRouter()
@@ -51,6 +54,18 @@ export default function InteressentenListe({
   const [modalOpen, setModalOpen] = useState(false)
 
   const filtered = applyFilter(interessenten, filter)
+
+  const topAngebote = interessenten
+    .filter(i => i.abgegebenes_angebot != null)
+    .sort((a, b) => (b.abgegebenes_angebot as number) - (a.abgegebenes_angebot as number))
+    .slice(0, 5)
+    .map(i => ({
+      id: i.id as string,
+      name: i.name as string,
+      betrag: i.abgegebenes_angebot as number,
+      bonitaet: (i.bonitaet as string) ?? null,
+      bankbestaetigung: (i.bankbestaetigung as boolean) ?? false,
+    }))
 
   function updateUrl(params: { ausgewaehlt?: string | null; filter?: string; tab?: string }) {
     const current = new URLSearchParams(searchParams.toString())
@@ -82,6 +97,12 @@ export default function InteressentenListe({
           <Plus size={15} /> Neu anlegen
         </button>
       </div>
+
+      <TopAngeboteSektion
+        angebote={topAngebote}
+        listingPreis={listingPreis}
+        onSelect={(id) => updateUrl({ ausgewaehlt: id, tab: 'angebote' })}
+      />
 
       <FilterTabs
         current={filter}
